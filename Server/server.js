@@ -5,14 +5,14 @@ import cors from "cors";
 import dotenv from "dotenv";
 import connectDB from "./config/db.js";
 import setupSocket from "./socket/socketManager.js";
-import server from "./serverConfig.js";
+import server2 from "./serverConfig.js";
 
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: server,
+        origin: server2,
         methods: ["GET", "POST"],
         credentials: true,
     },
