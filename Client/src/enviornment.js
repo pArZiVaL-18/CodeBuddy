@@ -1,4 +1,4 @@
-let IS_PRODUCTION = true;
+let IS_PRODUCTION = false;
 
 const server = IS_PRODUCTION
     ? "https://codebuddy-fgyi.onrender.com"
