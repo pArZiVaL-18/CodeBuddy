@@ -951,6 +951,7 @@ import {
 import { jwtDecode } from "jwt-decode";
 import "../styles/RoomPage.css";
 import { useNavigate } from "react-router-dom";
+import server from "../enviornment.js";
 
 const languageOptions = [
     { judge0Id: 63, monacoId: "javascript", label: "JavaScript" },
@@ -1036,9 +1037,7 @@ export default function ProblemPageWithChat() {
     useEffect(() => {
         const fetchProblem = async () => {
             try {
-                const res = await fetch(
-                    `http://localhost:8080/api/problems/${problemId}`
-                );
+                const res = await fetch(`${server}/api/problems/${problemId}`);
                 const data = await res.json();
                 setProblem(data);
 
@@ -1200,7 +1199,7 @@ export default function ProblemPageWithChat() {
             );
             if (result.verdict === "Accepted") {
                 setOutput(`✅ Accepted: All ${result.total} test cases passed`);
-                await fetch("http://localhost:8080/api/submit/collab", {
+                await fetch(`${server}/api/submit/collab`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

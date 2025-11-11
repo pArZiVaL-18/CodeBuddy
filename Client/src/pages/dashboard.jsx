@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import toast from "react-hot-toast";
 import "../styles/Dashboard.css";
-// import { set } from "mongoose";
+import server from "../enviornment.js";
 
 export default function Dashboard() {
     const [problems, setProblems] = useState([]);
@@ -40,7 +40,7 @@ export default function Dashboard() {
 
             if (!USE_COOKIES && jwt) headers.Authorization = `Bearer ${jwt}`;
 
-            const res = await fetch("http://localhost:8080/api/auth/me", {
+            const res = await fetch(`${server}/api/auth/me`, {
                 method: "GET",
                 credentials: USE_COOKIES ? "include" : "omit",
                 headers,
@@ -138,14 +138,11 @@ export default function Dashboard() {
             // });
             const userId = localStorage.getItem("myId");
             // console.log("Fetching problems for user ID:", userId);
-            const res = await fetch(
-                `http://localhost:8080/api/problems?userId=${userId}`,
-                {
-                    method: "GET",
-                    credentials: "include",
-                    headers,
-                }
-            );
+            const res = await fetch(`${server}/api/problems?userId=${userId}`, {
+                method: "GET",
+                credentials: "include",
+                headers,
+            });
 
             // if (!res.ok) throw new Error(`HTTP error! status ${res.status}`);
             // const data = await res.json();

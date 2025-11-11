@@ -369,6 +369,7 @@ import ProblemPanel from "../components/ProblemPanel";
 import { Play, Send, RotateCcw, Sun, Moon, Code2 } from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import "../styles/SolveSolo.css";
+import server from "../enviornment";
 
 const languageOptions = [
     { judge0Id: 63, monacoId: "javascript", label: "JavaScript" },
@@ -418,9 +419,7 @@ export default function ProblemPage() {
     useEffect(() => {
         const fetchProblem = async () => {
             try {
-                const res = await fetch(
-                    `http://localhost:8080/api/problems/${problemId}`
-                );
+                const res = await fetch(`${server}/api/problems/${problemId}`);
                 const data = await res.json();
                 setProblem(data);
 
@@ -504,7 +503,7 @@ export default function ProblemPage() {
 
                 console.log("Problem ", problem._id);
                 console.log("userIds ", [userId]);
-                await fetch("http://localhost:8080/api/submit", {
+                await fetch(`${server}/api/submit`, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({

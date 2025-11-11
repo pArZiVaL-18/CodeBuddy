@@ -178,6 +178,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/leaderboard.css";
+import server from "../enviornment";
 
 export default function Leaderboard() {
     const [leaders, setLeaders] = useState([]);
@@ -188,9 +189,7 @@ export default function Leaderboard() {
     useEffect(() => {
         const fetchLeaderboard = async () => {
             try {
-                const res = await fetch(
-                    "http://localhost:8080/api/leaderboard"
-                );
+                const res = await fetch(`${server}/api/leaderboard`);
                 if (!res.ok) throw new Error("Failed to fetch leaderboard");
                 const data = await res.json();
                 setLeaders(data);
@@ -222,9 +221,7 @@ export default function Leaderboard() {
         setError(null);
         const fetchLeaderboard = async () => {
             try {
-                const res = await fetch(
-                    "http://localhost:8080/api/leaderboard"
-                );
+                const res = await fetch(`${server}/api/leaderboard`);
                 if (!res.ok) throw new Error("Failed to fetch leaderboard");
                 const data = await res.json();
                 setLeaders(data);
