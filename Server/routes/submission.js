@@ -52,8 +52,8 @@ router.post("/collab", async (req, res) => {
             testCasesPassed,
         } = req.body;
 
-        console.log("Collaborative submission for users:", userIds);
-        console.log("Problem ID:", problemId);
+        // console.log("Collaborative submission for users:", userIds);
+        // console.log("Problem ID:", problemId);
 
         const submission = await handleSubmission({
             userIds,

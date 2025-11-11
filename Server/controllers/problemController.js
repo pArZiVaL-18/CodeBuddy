@@ -5,15 +5,15 @@ const getAllProblems = async (req, res) => {
     // const userId = req.user.id;
 
     const userId = req.query.userId;
-    console.log("Fetching problems for user ID:", userId);
+    // console.log("Fetching problems for user ID:", userId);
 
     const problems = await Problem.find();
     const user = await User.findById(userId).populate("solvedProblems");
 
     const solvedIds = user.solvedProblems.map((p) => p._id.toString());
 
-    console.log("Solved problem IDs for user:", solvedIds);
-    console.log("Total problems fetched:", problems.length);
+    // console.log("Solved problem IDs for user:", solvedIds);
+    // console.log("Total problems fetched:", problems.length);
     res.json({ problems, solvedIds });
 
     // res.json(problems);
