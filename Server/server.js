@@ -14,7 +14,7 @@ const io = new Server(server, {
     cors: {
         origin: server2,
         methods: ["GET", "POST"],
-        credentials: false,
+        credentials: true,
     },
 });
 
@@ -22,7 +22,7 @@ app.use(
     cors({
         origin: server2,
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
-        credentials: false,
+        credentials: true,
     })
 );
 app.use(express.json());
