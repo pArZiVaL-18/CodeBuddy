@@ -12,7 +12,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: server2,
+        origin: "*",
         methods: ["GET", "POST"],
         credentials: true,
     },
@@ -20,7 +20,7 @@ const io = new Server(server, {
 
 app.use(
     cors({
-        origin: server,
+        origin: "*",
         methods: ["GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"],
         credentials: true,
     })
