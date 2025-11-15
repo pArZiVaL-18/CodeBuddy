@@ -1,180 +1,4 @@
-// // import "../styles/leaderboard.css";
-
-// // export default function Leaderboard() {
-// //     const dummyData = [
-// //         { rank: 1, name: "Sujal", problemsSolved: 15, score: 150 },
-// //         { rank: 2, name: "Vaibhav", problemsSolved: 12, score: 120 },
-// //         { rank: 3, name: "Chaitanya", problemsSolved: 10, score: 100 },
-// //         { rank: 4, name: "Samruddhi", problemsSolved: 9, score: 90 },
-// //         { rank: 5, name: "Shekhar", problemsSolved: 8, score: 80 },
-// //         { rank: 5, name: "Roshan", problemsSolved: 7, score: 70 },
-// //         { rank: 5, name: "Alok", problemsSolved: 6, score: 60 },
-// //     ];
-
-// //     const getRankIcon = (rank) => {
-// //         if (rank === 1) return "🥇";
-// //         if (rank === 2) return "🥈";
-// //         if (rank === 3) return "🥉";
-// //         return `#${rank}`;
-// //     };
-
-// //     const getRankClass = (rank) => {
-// //         if (rank <= 3) return `rank-${rank}`;
-// //         return "";
-// //     };
-
-// //     return (
-// //         <div className="leaderboard-page">
-// //             <div className="leaderboard-container">
-// //                 {/* Header */}
-// //                 <div className="leaderboard-header">
-// //                     <h1 className="leaderboard-title">Leaderboard</h1>
-// //                     <p className="leaderboard-subtitle">
-// //                         Top performers in our coding community
-// //                     </p>
-// //                 </div>
-
-// //                 {/* Leaderboard Table */}
-// //                 <div className="leaderboard-card">
-// //                     <div className="table-container">
-// //                         <table className="leaderboard-table">
-// //                             <thead>
-// //                                 <tr>
-// //                                     <th>Rank</th>
-// //                                     <th>Name</th>
-// //                                     <th>Problems Solved</th>
-// //                                     <th>Score</th>
-// //                                 </tr>
-// //                             </thead>
-// //                             <tbody>
-// //                                 {dummyData.map((user) => (
-// //                                     <tr
-// //                                         key={user.rank}
-// //                                         className={`table-row ${getRankClass(
-// //                                             user.rank
-// //                                         )}`}
-// //                                     >
-// //                                         <td>
-// //                                             <div className="rank-cell">
-// //                                                 <span className="rank-display">
-// //                                                     {getRankIcon(user.rank)}
-// //                                                 </span>
-// //                                             </div>
-// //                                         </td>
-// //                                         <td>
-// //                                             <div className="name-cell">
-// //                                                 <div className="user-avatar">
-// //                                                     {user.name.charAt(0)}
-// //                                                 </div>
-// //                                                 <span className="user-name">
-// //                                                     {user.name}
-// //                                                 </span>
-// //                                             </div>
-// //                                         </td>
-// //                                         <td>
-// //                                             <div className="problems-cell">
-// //                                                 <span className="problems-count">
-// //                                                     {user.problemsSolved}
-// //                                                 </span>
-// //                                                 <span className="problems-label">
-// //                                                     problems
-// //                                                 </span>
-// //                                             </div>
-// //                                         </td>
-// //                                         <td>
-// //                                             <div className="score-cell">
-// //                                                 <span className="score-value">
-// //                                                     {user.score}
-// //                                                 </span>
-// //                                                 <span className="score-label">
-// //                                                     pts
-// //                                                 </span>
-// //                                             </div>
-// //                                         </td>
-// //                                     </tr>
-// //                                 ))}
-// //                             </tbody>
-// //                         </table>
-// //                     </div>
-// //                 </div>
-// //             </div>
-// //         </div>
-// //     );
-// // }
-// // ----------------------------------------------------------------------------------------------------------------------
-
-// import { useEffect, useState } from "react";
-// import "../styles/leaderboard.css";
-
-// export default function Leaderboard() {
-//     const [leaders, setLeaders] = useState([]);
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState(null);
-
-//     useEffect(() => {
-//         const fetchLeaderboard = async () => {
-//             try {
-//                 const res = await fetch(
-//                     "http://localhost:8080/api/leaderboard"
-//                 );
-//                 if (!res.ok) throw new Error("Failed to fetch leaderboard");
-//                 const data = await res.json();
-//                 setLeaders(data);
-//             } catch (err) {
-//                 setError(err.message);
-//             } finally {
-//                 setLoading(false);
-//             }
-//         };
-
-//         fetchLeaderboard();
-//     }, []);
-
-//     const getRankDisplay = (index) => {
-//         switch (index) {
-//             case 0:
-//                 return "🥇";
-//             case 1:
-//                 return "🥈";
-//             case 2:
-//                 return "🥉";
-//             default:
-//                 return index + 1;
-//         }
-//     };
-
-//     if (loading) return <p className="loading">Loading leaderboard...</p>;
-//     if (error) return <p className="error">Error: {error}</p>;
-
-//     return (
-//         <div className="leaderboard-container">
-//             <h1 className="leaderboard-title">🏆 Leaderboard</h1>
-//             <table className="leaderboard-table">
-//                 <thead>
-//                     <tr>
-//                         <th>Rank</th>
-//                         <th>User</th>
-//                         <th>Problems Solved</th>
-//                         <th>Score</th>
-//                     </tr>
-//                 </thead>
-//                 <tbody>
-//                     {leaders.map((user, index) => (
-//                         <tr key={user._id}>
-//                             <td className="rank-cell">
-//                                 {getRankDisplay(index)}
-//                             </td>
-//                             <td>{user.name}</td>
-//                             <td>{user.problemSolved}</td>
-//                             <td>{user.score}</td>
-//                         </tr>
-//                     ))}
-//                 </tbody>
-//             </table>
-//         </div>
-//     );
-// }
-// // -----------------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------------
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/leaderboard.css";
@@ -489,9 +313,13 @@ export default function Leaderboard() {
                 <div className="footer-content">
                     <p>🎯 Keep solving problems to climb up the leaderboard!</p>
                     <div className="footer-links">
-                        <span className="footer-link">Coding Challenges</span>
+                        <a className="footer-link" href="/">
+                            Go To Home
+                        </a>
                         <span className="separator">•</span>
-                        <span className="footer-link">Practice Problems</span>
+                        <a className="footer-link" href="/dashboard">
+                            Practice Problems
+                        </a>
                         <span className="separator">•</span>
                         <span className="footer-link">Community</span>
                     </div>
@@ -500,3 +328,250 @@ export default function Leaderboard() {
         </div>
     );
 }
+
+// --------------------------------------------------------------------------------------------------------------------------------
+
+// import React, { useEffect, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import "../styles/leaderboard.css";
+// import server from "../enviornment";
+
+// export default function Leaderboard() {
+//     const [leaders, setLeaders] = useState([]);
+//     const [loading, setLoading] = useState(true);
+//     const [error, setError] = useState(null);
+//     const navigate = useNavigate();
+
+//     useEffect(() => {
+//         fetchLeaderboard();
+//     }, []);
+
+//     const fetchLeaderboard = async () => {
+//         try {
+//             setLoading(true);
+//             setError(null);
+//             const res = await fetch(`${server}/api/leaderboard`);
+//             if (!res.ok) throw new Error("Failed to fetch leaderboard");
+//             const data = await res.json();
+//             setLeaders(data);
+//         } catch (err) {
+//             setError(err.message);
+//         } finally {
+//             setLoading(false);
+//         }
+//     };
+
+//     const getRankDisplay = (index) => {
+//         switch (index) {
+//             case 0:
+//                 return "🥇";
+//             case 1:
+//                 return "🥈";
+//             case 2:
+//                 return "🥉";
+//             default:
+//                 return index + 1;
+//         }
+//     };
+
+//     const handleBackToDashboard = () => {
+//         navigate("/dashboard");
+//     };
+
+//     if (loading) {
+//         return (
+//             <div className="page-wrapper">
+//                 <div className="loader-container">
+//                     <div className="loader"></div>
+//                     <p>Loading leaderboard...</p>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     if (error) {
+//         return (
+//             <div className="page-wrapper">
+//                 <div className="error-container">
+//                     <div className="error-icon">⚠️</div>
+//                     <h2>Something went wrong</h2>
+//                     <p>{error}</p>
+//                     <button className="btn-primary" onClick={fetchLeaderboard}>
+//                         Try Again
+//                     </button>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     return (
+//         <div className="page-wrapper">
+//             <div className="leaderboard-container">
+//                 {/* Header */}
+//                 <div className="header">
+//                     <button
+//                         className="btn-back"
+//                         onClick={handleBackToDashboard}
+//                     >
+//                         ← Back
+//                     </button>
+//                     <h1 className="title">Leaderboard</h1>
+//                     <button className="btn-refresh" onClick={fetchLeaderboard}>
+//                         ↻ Refresh
+//                     </button>
+//                 </div>
+
+//                 {/* Stats Bar */}
+//                 <div className="stats-bar">
+//                     <div className="stat-item">
+//                         <span className="stat-value">{leaders.length}</span>
+//                         <span className="stat-label">Users</span>
+//                     </div>
+//                     <div className="stat-divider"></div>
+//                     <div className="stat-item">
+//                         <span className="stat-value">
+//                             {leaders.reduce(
+//                                 (sum, u) => sum + (u.problemSolved || 0),
+//                                 0
+//                             )}
+//                         </span>
+//                         <span className="stat-label">Problems Solved</span>
+//                     </div>
+//                     <div className="stat-divider"></div>
+//                     <div className="stat-item">
+//                         <span className="stat-value">
+//                             {leaders.reduce(
+//                                 (sum, u) => sum + (u.score || 0),
+//                                 0
+//                             )}
+//                         </span>
+//                         <span className="stat-label">Total Points</span>
+//                     </div>
+//                 </div>
+
+//                 {/* Top 3 Podium */}
+//                 {leaders.length >= 3 && (
+//                     <div className="podium">
+//                         <div className="podium-card second-place">
+//                             <div className="podium-rank">2nd</div>
+//                             <div className="podium-avatar">
+//                                 {leaders[1]?.name?.charAt(0)?.toUpperCase() ||
+//                                     "?"}
+//                             </div>
+//                             <div className="podium-name">
+//                                 {leaders[1]?.name || "Unknown"}
+//                             </div>
+//                             <div className="podium-stats">
+//                                 <span className="podium-score">
+//                                     {leaders[1]?.score || 0} pts
+//                                 </span>
+//                                 <span className="podium-problems">
+//                                     {leaders[1]?.problemSolved || 0} solved
+//                                 </span>
+//                             </div>
+//                         </div>
+
+//                         <div className="podium-card first-place">
+//                             <div className="crown">👑</div>
+//                             <div className="podium-rank">1st</div>
+//                             <div className="podium-avatar">
+//                                 {leaders[0]?.name?.charAt(0)?.toUpperCase() ||
+//                                     "?"}
+//                             </div>
+//                             <div className="podium-name">
+//                                 {leaders[0]?.name || "Unknown"}
+//                             </div>
+//                             <div className="podium-stats">
+//                                 <span className="podium-score">
+//                                     {leaders[0]?.score || 0} pts
+//                                 </span>
+//                                 <span className="podium-problems">
+//                                     {leaders[0]?.problemSolved || 0} solved
+//                                 </span>
+//                             </div>
+//                         </div>
+
+//                         <div className="podium-card third-place">
+//                             <div className="podium-rank">3rd</div>
+//                             <div className="podium-avatar">
+//                                 {leaders[2]?.name?.charAt(0)?.toUpperCase() ||
+//                                     "?"}
+//                             </div>
+//                             <div className="podium-name">
+//                                 {leaders[2]?.name || "Unknown"}
+//                             </div>
+//                             <div className="podium-stats">
+//                                 <span className="podium-score">
+//                                     {leaders[2]?.score || 0} pts
+//                                 </span>
+//                                 <span className="podium-problems">
+//                                     {leaders[2]?.problemSolved || 0} solved
+//                                 </span>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 )}
+
+//                 {/* Leaderboard Table */}
+//                 <div className="table-wrapper">
+//                     <table className="leaderboard-table">
+//                         <thead>
+//                             <tr>
+//                                 <th>Rank</th>
+//                                 <th>User</th>
+//                                 <th>Solved</th>
+//                                 <th>Score</th>
+//                             </tr>
+//                         </thead>
+//                         <tbody>
+//                             {leaders.map((user, index) => (
+//                                 <tr
+//                                     key={user.id || index}
+//                                     className={index < 3 ? "top-three" : ""}
+//                                 >
+//                                     <td className="rank-col">
+//                                         <span className="rank-badge">
+//                                             {getRankDisplay(index)}
+//                                         </span>
+//                                     </td>
+//                                     <td className="user-col">
+//                                         <div className="user-info">
+//                                             <div className="user-avatar">
+//                                                 {user.name
+//                                                     ?.charAt(0)
+//                                                     ?.toUpperCase() || "?"}
+//                                             </div>
+//                                             <span className="user-name">
+//                                                 {user.name || "Unknown"}
+//                                             </span>
+//                                         </div>
+//                                     </td>
+//                                     <td className="solved-col">
+//                                         <span className="number">
+//                                             {user.problemSolved || 0}
+//                                         </span>
+//                                     </td>
+//                                     <td className="score-col">
+//                                         <span className="score-number">
+//                                             {user.score || 0}
+//                                         </span>
+//                                     </td>
+//                                 </tr>
+//                             ))}
+//                         </tbody>
+//                     </table>
+//                 </div>
+
+//                 {leaders.length === 0 && (
+//                     <div className="empty-state">
+//                         <div className="empty-icon">🏆</div>
+//                         <h3>No rankings yet</h3>
+//                         <p>
+//                             Start solving problems to appear on the leaderboard!
+//                         </p>
+//                     </div>
+//                 )}
+//             </div>
+//         </div>
+//     );
+// }

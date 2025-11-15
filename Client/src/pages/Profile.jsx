@@ -140,6 +140,10 @@ export default function Profile() {
                 <div className="page-title">
                     <h1 className="profile-title">👤 Profile</h1>
                 </div>
+                {/* <button onClick={handleLogout} className="logout-button">
+                    <span className="logout-icon">⎋</span>
+                    <span className="logout-text">Logout</span>
+                </button> */}
             </div>
 
             {/* Profile Content */}
@@ -192,13 +196,13 @@ export default function Profile() {
                         </div>
 
                         <div className="profile-actions">
-                            <button
+                            {/* <button
                                 className="edit-btn"
                                 onClick={handleEditProfile}
                             >
                                 <span className="edit-icon">✏</span>
                                 Edit
-                            </button>
+                            </button> */}
                             <button
                                 className="refresh-btn"
                                 onClick={handleLogout}
@@ -424,7 +428,7 @@ export default function Profile() {
                 </div>
 
                 {/* Activity Summary */}
-                <div className="activity-section">
+                {/* <div className="activity-section">
                     <div className="section-header">
                         <h2 className="section-title">📋 Account Details</h2>
                     </div>
@@ -451,7 +455,7 @@ export default function Profile() {
                             <div className="activity-value">Active</div>
                         </div>
                     </div>
-                </div>
+                </div> */}
             </div>
         </div>
     );
@@ -475,3 +479,435 @@ function isLongTimeMember(createdAt) {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return new Date(createdAt) <= thirtyDaysAgo;
 }
+
+
+// --------------------------------------------------------------------------------------------------
+
+// import { useEffect, useState } from "react";
+// import { useNavigate } from "react-router-dom";
+// import "../styles/profile.css";
+// import server from "../enviornment.js";
+
+// const BASE_URL = import.meta.env.VITE_API_URL || `${server}/api/auth`;
+// const USE_COOKIES = false;
+
+// export default function Profile() {
+//     const [user, setUser] = useState(null);
+//     const [err, setErr] = useState("");
+//     const [loading, setLoading] = useState(true);
+//     const [refreshing, setRefreshing] = useState(false);
+//     const navigate = useNavigate();
+
+//     useEffect(() => {
+//         let abort = false;
+//         loadMe(abort);
+//         return () => {
+//             abort = true;
+//         };
+//     }, []);
+
+//     async function loadMe(abort = false) {
+//         setLoading(true);
+//         setErr("");
+//         try {
+//             const jwt = localStorage.getItem("jwt");
+//             const headers = { "Content-Type": "application/json" };
+//             if (!USE_COOKIES && jwt) headers.Authorization = `Bearer ${jwt}`;
+
+//             const res = await fetch(`${BASE_URL}/me`, {
+//                 method: "GET",
+//                 headers,
+//                 credentials: USE_COOKIES ? "include" : "omit",
+//             });
+
+//             const data = await res.json().catch(() => ({}));
+
+//             if (!res.ok) {
+//                 const message =
+//                     data?.message ||
+//                     (res.status === 401
+//                         ? "Not authenticated. Please log in."
+//                         : "Failed to load profile");
+//                 throw new Error(message);
+//             }
+
+//             const userDoc =
+//                 data?.data?.data || data?.data || data?.user || null;
+//             if (!abort) setUser(userDoc);
+//         } catch (e) {
+//             if (!abort) setErr(e.message || "Something went wrong");
+//         } finally {
+//             if (!abort) {
+//                 setLoading(false);
+//                 setRefreshing(false);
+//             }
+//         }
+//     }
+
+//     const handleRefresh = async () => {
+//         setRefreshing(true);
+//         await loadMe();
+//     };
+
+//     const handleBackToDashboard = () => {
+//         navigate("/dashboard");
+//     };
+
+//     const handleLogout = () => {
+//         localStorage.removeItem("jwt");
+//         setUser(null);
+//         navigate("/login");
+//     };
+
+//     const handleEditProfile = () => {
+//         console.log("Edit profile clicked");
+//     };
+
+//     if (loading) {
+//         return (
+//             <div className="profile-container">
+//                 <div className="loading-wrapper">
+//                     <div className="loading-spinner"></div>
+//                     <p className="loading-text">Loading your profile...</p>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     if (err) {
+//         return (
+//             <div className="profile-container">
+//                 <div className="error-wrapper">
+//                     <div className="error-icon">⚠️</div>
+//                     <div className="error-message">{err}</div>
+//                     <p className="error-description">
+//                         Unable to load your profile information.
+//                     </p>
+//                     <button onClick={handleRefresh} className="retry-btn">
+//                         <span className="retry-icon">↻</span>
+//                         Try Again
+//                     </button>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     if (!user) {
+//         return (
+//             <div className="profile-container">
+//                 <div className="empty-state">
+//                     <div className="empty-icon">👤</div>
+//                     <h3>No Profile Data</h3>
+//                     <p>We couldn't find any profile information.</p>
+//                     <button onClick={handleRefresh} className="retry-btn">
+//                         Refresh
+//                     </button>
+//                 </div>
+//             </div>
+//         );
+//     }
+
+//     const getInitials = (name) => {
+//         if (!name) return "?";
+//         return name
+//             .split(" ")
+//             .map((n) => n[0])
+//             .join("")
+//             .toUpperCase()
+//             .slice(0, 2);
+//     };
+
+//     const formatDate = (date) => {
+//         if (!date) return "Unknown";
+//         return new Date(date).toLocaleDateString("en-US", {
+//             year: "numeric",
+//             month: "long",
+//             day: "numeric",
+//         });
+//     };
+
+//     return (
+//         <div className="profile-container">
+//             {/* Navigation Header */}
+//             <header className="navigation-header">
+//                 <button onClick={handleBackToDashboard} className="back-button">
+//                     <span className="back-icon">←</span>
+//                     <span className="back-text">Dashboard</span>
+//                 </button>
+//                 <h1 className="page-title">My Profile</h1>
+//                 <button onClick={handleLogout} className="logout-button">
+//                     <span className="logout-icon">⎋</span>
+//                     <span className="logout-text">Logout</span>
+//                 </button>
+//             </header>
+
+//             <div className="profile-content">
+//                 {/* Profile Header Card */}
+//                 <div className="profile-header-card">
+//                     <div className="profile-banner"></div>
+//                     <div className="profile-header">
+//                         <div className="avatar-section">
+//                             <div className="avatar">
+//                                 {user.profilePicture ? (
+//                                     <img
+//                                         src={user.profilePicture}
+//                                         alt={user.name}
+//                                         className="avatar-img"
+//                                     />
+//                                 ) : (
+//                                     <div className="avatar-placeholder">
+//                                         {getInitials(user.name)}
+//                                     </div>
+//                                 )}
+//                                 <div className="avatar-badge">✓</div>
+//                             </div>
+//                         </div>
+
+//                         <div className="profile-info">
+//                             <h2 className="profile-name">
+//                                 {user.name || "Anonymous User"}
+//                             </h2>
+//                             <p className="profile-email">
+//                                 {user.email || "No email provided"}
+//                             </p>
+
+//                             {user.bio && (
+//                                 <p className="profile-bio">{user.bio}</p>
+//                             )}
+
+//                             <div className="profile-meta">
+//                                 <span className="member-since">
+//                                     <span className="meta-icon">📅</span>
+//                                     Member since {formatDate(user.createdAt)}
+//                                 </span>
+//                                 {user.role && (
+//                                     <span className="user-role">
+//                                         <span className="meta-icon">⭐</span>
+//                                         {user.role}
+//                                     </span>
+//                                 )}
+//                             </div>
+//                         </div>
+
+//                         <div className="profile-actions">
+//                             <button
+//                                 onClick={handleEditProfile}
+//                                 className="edit-btn"
+//                             >
+//                                 <span className="edit-icon">✎</span>
+//                                 <span>Edit Profile</span>
+//                             </button>
+//                             <button
+//                                 onClick={handleRefresh}
+//                                 disabled={refreshing}
+//                                 className="refresh-btn"
+//                             >
+//                                 <span
+//                                     className={`refresh-icon ${
+//                                         refreshing ? "spinning" : ""
+//                                     }`}
+//                                 >
+//                                     ↻
+//                                 </span>
+//                                 <span>
+//                                     {refreshing ? "Refreshing..." : "Refresh"}
+//                                 </span>
+//                             </button>
+//                         </div>
+//                     </div>
+//                 </div>
+
+//                 {/* Statistics Section */}
+//                 <section className="stats-section">
+//                     <div className="section-header">
+//                         <h3 className="section-title">
+//                             Performance Statistics
+//                         </h3>
+//                         <span className="last-updated">
+//                             Last updated: {new Date().toLocaleDateString()}
+//                         </span>
+//                     </div>
+
+//                     <div className="stats-grid">
+//                         <div className="stat-card">
+//                             <div className="stat-icon problems-icon">
+//                                 <span>✓</span>
+//                             </div>
+//                             <div className="stat-info">
+//                                 <div className="stat-number">
+//                                     {user.problemsSolved || 0}
+//                                 </div>
+//                                 <div className="stat-label">
+//                                     Problems Solved
+//                                 </div>
+//                                 <div className="stat-progress">
+//                                     <div
+//                                         className="progress-bar"
+//                                         style={{
+//                                             width: `${Math.min(
+//                                                 ((user.problemsSolved || 0) /
+//                                                     500) *
+//                                                     100,
+//                                                 100
+//                                             )}%`,
+//                                         }}
+//                                     ></div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         <div className="stat-card">
+//                             <div className="stat-icon score-icon">
+//                                 <span>★</span>
+//                             </div>
+//                             <div className="stat-info">
+//                                 <div className="stat-number">
+//                                     {user.score || 0}
+//                                 </div>
+//                                 <div className="stat-label">Total Score</div>
+//                                 <div className="stat-progress">
+//                                     <div
+//                                         className="progress-bar"
+//                                         style={{
+//                                             width: `${Math.min(
+//                                                 ((user.score || 0) / 10000) *
+//                                                     100,
+//                                                 100
+//                                             )}%`,
+//                                         }}
+//                                     ></div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         <div className="stat-card">
+//                             <div className="stat-icon rank-icon">
+//                                 <span>🏆</span>
+//                             </div>
+//                             <div className="stat-info">
+//                                 <div className="stat-number">
+//                                     #{user.ranking || "N/A"}
+//                                 </div>
+//                                 <div className="stat-label">Global Rank</div>
+//                                 <div className="stat-progress">
+//                                     <div
+//                                         className="progress-bar"
+//                                         style={{ width: "75%" }}
+//                                     ></div>
+//                                 </div>
+//                             </div>
+//                         </div>
+
+//                         <div className="stat-card">
+//                             <div className="stat-icon activity-icon">
+//                                 <span>📊</span>
+//                             </div>
+//                             <div className="stat-info">
+//                                 <div className="stat-number">
+//                                     {user.activityStreak || 0}
+//                                 </div>
+//                                 <div className="stat-label">Day Streak</div>
+//                                 <div className="stat-progress">
+//                                     <div
+//                                         className="progress-bar"
+//                                         style={{
+//                                             width: `${Math.min(
+//                                                 ((user.activityStreak || 0) /
+//                                                     30) *
+//                                                     100,
+//                                                 100
+//                                             )}%`,
+//                                         }}
+//                                     ></div>
+//                                 </div>
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </section>
+
+//                 {/* Achievements Section */}
+//                 {user.achievements && user.achievements.length > 0 && (
+//                     <section className="achievements-section">
+//                         <div className="section-header">
+//                             <h3 className="section-title">Achievements</h3>
+//                             <span className="achievements-count">
+//                                 {user.achievements.length} earned
+//                             </span>
+//                         </div>
+
+//                         <div className="achievements-grid">
+//                             {user.achievements.map((achievement, index) => (
+//                                 <div
+//                                     key={index}
+//                                     className={`achievement-badge ${
+//                                         achievement.unlocked
+//                                             ? "unlocked"
+//                                             : "locked"
+//                                     }`}
+//                                 >
+//                                     <span className="badge-icon">
+//                                         {achievement.icon || "🏅"}
+//                                     </span>
+//                                     <div className="badge-info">
+//                                         <div className="badge-name">
+//                                             {achievement.name || "Achievement"}
+//                                         </div>
+//                                         <div className="badge-desc">
+//                                             {achievement.description ||
+//                                                 "No description"}
+//                                         </div>
+//                                     </div>
+//                                 </div>
+//                             ))}
+//                         </div>
+//                     </section>
+//                 )}
+
+//                 {/* Activity Section */}
+//                 <section className="activity-section">
+//                     <div className="section-header">
+//                         <h3 className="section-title">Recent Activity</h3>
+//                     </div>
+
+//                     <div className="activity-grid">
+//                         <div className="activity-card">
+//                             <div className="activity-label">Last Login</div>
+//                             <div className="activity-value">
+//                                 {user.lastLogin
+//                                     ? formatDate(user.lastLogin)
+//                                     : "Never"}
+//                             </div>
+//                         </div>
+
+//                         <div className="activity-card">
+//                             <div className="activity-label">
+//                                 Total Submissions
+//                             </div>
+//                             <div className="activity-value">
+//                                 {user.totalSubmissions || 0}
+//                             </div>
+//                         </div>
+
+//                         <div className="activity-card">
+//                             <div className="activity-label">Success Rate</div>
+//                             <div className="activity-value">
+//                                 {user.successRate
+//                                     ? `${user.successRate}%`
+//                                     : "N/A"}
+//                             </div>
+//                         </div>
+
+//                         <div className="activity-card">
+//                             <div className="activity-label">
+//                                 Favorite Language
+//                             </div>
+//                             <div className="activity-value">
+//                                 {user.favoriteLanguage || "Not set"}
+//                             </div>
+//                         </div>
+//                     </div>
+//                 </section>
+//             </div>
+//         </div>
+//     );
+// }
