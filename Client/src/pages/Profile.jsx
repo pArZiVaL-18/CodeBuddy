@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/profile.css";
+import "../styles/Profile.css";
 import server from "../enviornment.js";
 
 const BASE_URL = import.meta.env.VITE_API_URL || `${server}/api/auth`;
@@ -61,31 +61,67 @@ export default function Profile() {
         }
     }
 
-    const handleRefresh = async () => {
+    async function handleRefresh() {
         setRefreshing(true);
         await loadMe();
-    };
+    }
 
-    const handleBackToDashboard = () => {
-        navigate("/dashboard");
-    };
-
-    const handleLogout = () => {
+    function handleLogout() {
         localStorage.removeItem("jwt");
+        localStorage.removeItem("userEmail");
         setUser(null);
-        navigate("/login");
+        navigate("/");
+    }
+
+    function handleEditProfile() {
+        console.log("Edit profile clicked");
+        // Add edit profile functionality here
+    }
+
+    const getInitials = (name) => {
+        if (!name) return "?";
+        return name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
     };
 
-    const handleEditProfile = () => {
-        // Add edit profile functionality here
-        console.log("Edit profile clicked");
+    const formatDate = (date) => {
+        if (!date) return "Unknown";
+        return new Date(date).toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+        });
     };
+
+    // Helper function to check if user is long-time member
+    function isLongTimeMember(createdAt) {
+        if (!createdAt) return false;
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return new Date(createdAt) < thirtyDaysAgo;
+    }
+
+    // Helper function to count achievements
+    function getAchievementCount(user) {
+        let count = 0;
+        if ((user?.problemSolved || 0) >= 1) count++;
+        if ((user?.problemSolved || 0) >= 5) count++;
+        if ((user?.problemSolved || 0) >= 10) count++;
+        if ((user?.score || 0) >= 100) count++;
+        if (user?.role === "admin") count++;
+        if (isLongTimeMember(user?.createdAt)) count++;
+        return count;
+    }
 
     if (loading) {
         return (
             <div className="profile-container">
                 <div className="loading-wrapper">
-                    <p className="loading">Loading profile...</p>
+                    <div className="loading">Loading your profile...</div>
                 </div>
             </div>
         );
@@ -95,8 +131,8 @@ export default function Profile() {
         return (
             <div className="profile-container">
                 <div className="error-wrapper">
-                    <p className="error">{err}</p>
-                    <button className="retry-btn" onClick={() => loadMe()}>
+                    <div className="error">{err}</div>
+                    <button onClick={handleRefresh} className="retry-btn">
                         Try Again
                     </button>
                 </div>
@@ -107,46 +143,39 @@ export default function Profile() {
     if (!user) {
         return (
             <div className="profile-container">
-                <div className="empty-state">
-                    <div className="empty-icon">👤</div>
-                    <h3>No Profile Data</h3>
-                    <p>Unable to load your profile information.</p>
-                    <button className="refresh-btn" onClick={handleRefresh}>
-                        Reload Profile
+                <div className="error-wrapper">
+                    <div className="error">No profile data found</div>
+                    <button
+                        onClick={() => navigate("/login")}
+                        className="retry-btn"
+                    >
+                        Go to Login
                     </button>
                 </div>
             </div>
         );
     }
 
-    const initials = user.name ? user.name.charAt(0).toUpperCase() : "?";
-    const memberSince = user.createdAt
-        ? new Date(user.createdAt).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-          })
-        : "Unknown";
-
     return (
         <div className="profile-container">
             {/* Navigation Header */}
             <div className="navigation-header">
-                <button className="back-button" onClick={handleBackToDashboard}>
+                <button
+                    className="back-button"
+                    onClick={() => navigate("/dashboard")}
+                >
                     <span className="back-icon">←</span>
-                    <span className="back-text">Dashboard</span>
+                    <span>Dashboard</span>
                 </button>
-
                 <div className="page-title">
-                    <h1 className="profile-title">👤 Profile</h1>
+                    <h1 className="profile-title">My Profile</h1>
                 </div>
-                {/* <button onClick={handleLogout} className="logout-button">
-                    <span className="logout-icon">⎋</span>
-                    <span className="logout-text">Logout</span>
-                </button> */}
+                <button onClick={handleLogout} className="logout-btn">
+                    <span className="logout-icon">🚪</span>
+                    <span>Logout</span>
+                </button>
             </div>
 
-            {/* Profile Content */}
             <div className="profile-content">
                 {/* Profile Header Card */}
                 <div className="profile-header-card">
@@ -169,60 +198,62 @@ export default function Profile() {
                                     />
                                 ) : (
                                     <div className="avatar-placeholder">
-                                        {initials}
+                                        {getInitials(user.name)}
                                     </div>
                                 )}
                             </div>
                             <div className="avatar-badge">
-                                {user.role === "admin" ? "👑" : "⭐"}
+                                {user.role === "admin" ? "👑" : "✨"}
                             </div>
                         </div>
 
                         <div className="profile-info">
-                            <h1 className="profile-name">
+                            <h2 className="profile-name">
                                 {user.name || "Unknown User"}
-                            </h1>
+                            </h2>
                             <p className="profile-email">
                                 {user.email || "No email provided"}
                             </p>
+
+                            {user.bio && (
+                                <div className="profile-bio">{user.bio}</div>
+                            )}
+
                             <div className="profile-meta">
                                 <span className="member-since">
-                                    Member since {memberSince}
+                                    📅 Member since {formatDate(user.createdAt)}
                                 </span>
-                                <span className="user-role">
-                                    {user.role || "user"}
-                                </span>
+                                {user.role && (
+                                    <span className="user-role">
+                                        {user.role === "admin" ? "👑" : "👤"}{" "}
+                                        {user.role}
+                                    </span>
+                                )}
                             </div>
-                        </div>
 
-                        <div className="profile-actions">
-                            {/* <button
-                                className="edit-btn"
-                                onClick={handleEditProfile}
-                            >
-                                <span className="edit-icon">✏</span>
-                                Edit
-                            </button> */}
-                            <button
-                                className="refresh-btn"
-                                onClick={handleLogout}
-                            >
-                                Logout
-                            </button>
-                            <button
-                                className="refresh-btn"
-                                onClick={handleRefresh}
-                                disabled={refreshing}
-                            >
-                                <span
-                                    className={`refresh-icon ${
-                                        refreshing ? "spinning" : ""
-                                    }`}
+                            <div className="profile-actions">
+                                <button
+                                    className="edit-btn"
+                                    onClick={handleEditProfile}
                                 >
-                                    🔄
-                                </span>
-                                {refreshing ? "Refreshing..." : "Refresh"}
-                            </button>
+                                    <span className="edit-icon">✏️</span>
+                                    Edit Profile
+                                </button>
+                                <button
+                                    className="refresh-btn"
+                                    onClick={handleRefresh}
+                                    disabled={refreshing}
+                                >
+                                    <span
+                                        className={`refresh-icon ${
+                                            refreshing ? "spinning" : ""
+                                        }`}
+                                    >
+                                        🔄
+                                    </span>
+                                    {refreshing ? "Refreshing..." : "Refresh"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -230,15 +261,14 @@ export default function Profile() {
                 {/* Statistics Section */}
                 <div className="stats-section">
                     <div className="section-header">
-                        <h2 className="section-title">📊 Statistics</h2>
+                        <h3 className="section-title">Statistics</h3>
                         <div className="last-updated">
                             Last updated: {new Date().toLocaleTimeString()}
                         </div>
                     </div>
-
                     <div className="stats-grid">
                         <div className="stat-card">
-                            <div className="stat-icon problems-icon">🧩</div>
+                            <div className="stat-icon problems-icon">🎯</div>
                             <div className="stat-info">
                                 <div className="stat-number">
                                     {user.problemSolved || 0}
@@ -246,20 +276,8 @@ export default function Profile() {
                                 <div className="stat-label">
                                     Problems Solved
                                 </div>
-                                <div className="stat-progress">
-                                    <div
-                                        className="progress-bar"
-                                        style={{
-                                            width: `${Math.min(
-                                                (user.problemSolved || 0) * 2,
-                                                100
-                                            )}%`,
-                                        }}
-                                    ></div>
-                                </div>
                             </div>
                         </div>
-
                         <div className="stat-card">
                             <div className="stat-icon score-icon">⭐</div>
                             <div className="stat-info">
@@ -267,105 +285,80 @@ export default function Profile() {
                                     {user.score || 0}
                                 </div>
                                 <div className="stat-label">Total Score</div>
-                                <div className="stat-progress">
-                                    <div
-                                        className="progress-bar"
-                                        style={{
-                                            width: `${Math.min(
-                                                (user.score || 0) / 10,
-                                                100
-                                            )}%`,
-                                        }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon rank-icon">🏆</div>
-                            <div className="stat-info">
-                                <div className="stat-number">
-                                    {user.level
-                                        ? `Level ${user.level}`
-                                        : "Beginner"}
-                                </div>
-                                <div className="stat-label">Current Level</div>
-                                <div className="stat-progress">
-                                    <div
-                                        className="progress-bar"
-                                        style={{
-                                            width: `${(user.level || 1) * 20}%`,
-                                        }}
-                                    ></div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="stat-card">
-                            <div className="stat-icon activity-icon">📈</div>
-                            <div className="stat-info">
-                                <div className="stat-number">
-                                    {user.role === "admin" ? "Admin" : "Active"}
-                                </div>
-                                <div className="stat-label">Status</div>
-                                <div className="stat-progress">
-                                    <div
-                                        className="progress-bar"
-                                        style={{ width: "100%" }}
-                                    ></div>
-                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* Achievements Section */}
+                {/* Achievements Section - Using Your Original Logic */}
                 <div className="achievements-section">
                     <div className="section-header">
-                        <h2 className="section-title">🏅 Achievements</h2>
+                        <h3 className="section-title">Achievements</h3>
                         <div className="achievements-count">
                             {getAchievementCount(user)} unlocked
                         </div>
                     </div>
-
                     <div className="achievements-grid">
+                        {/* First Steps */}
                         <div
                             className={`achievement-badge ${
-                                (user.problemSolved || 0) >= 1
+                                (user?.problemSolved || 0) >= 1
                                     ? "unlocked"
                                     : "locked"
                             }`}
                         >
-                            <div className="badge-icon">🌱</div>
+                            <div className="badge-icon">🌟</div>
                             <div className="badge-info">
                                 <span className="badge-name">First Steps</span>
+                                <br />
                                 <span className="badge-desc">
                                     Solve your first problem
                                 </span>
                             </div>
                         </div>
 
+                        {/* Problem Solver */}
                         <div
                             className={`achievement-badge ${
-                                (user.problemSolved || 0) >= 5
+                                (user?.problemSolved || 0) >= 5
                                     ? "unlocked"
                                     : "locked"
                             }`}
                         >
-                            <div className="badge-icon">🔥</div>
+                            <div className="badge-icon">🎯</div>
                             <div className="badge-info">
                                 <span className="badge-name">
                                     Problem Solver
                                 </span>
+                                <br />
                                 <span className="badge-desc">
                                     Solve 5 problems
                                 </span>
                             </div>
                         </div>
 
+                        {/* Century Club */}
                         <div
                             className={`achievement-badge ${
-                                (user.problemSolved || 0) >= 10
+                                (user?.score || 0) >= 100
+                                    ? "unlocked"
+                                    : "locked"
+                            }`}
+                        >
+                            <div className="badge-icon">💯</div>
+                            <div className="badge-info">
+                                <span className="badge-name">Century Club</span>
+                                <br />
+                                <span className="badge-desc">
+                                    Reach 100 points
+                                </span>
+                            </div>
+                        </div>
+
+                        {/* Rising Star */}
+                        <div
+                            className={`achievement-badge ${
+                                (user?.problemSolved || 0) >= 10
                                     ? "unlocked"
                                     : "locked"
                             }`}
@@ -373,29 +366,17 @@ export default function Profile() {
                             <div className="badge-icon">⭐</div>
                             <div className="badge-info">
                                 <span className="badge-name">Rising Star</span>
+                                <br />
                                 <span className="badge-desc">
                                     Solve 10 problems
                                 </span>
                             </div>
                         </div>
 
+                        {/* Administrator */}
                         <div
                             className={`achievement-badge ${
-                                (user.score || 0) >= 100 ? "unlocked" : "locked"
-                            }`}
-                        >
-                            <div className="badge-icon">🏆</div>
-                            <div className="badge-info">
-                                <span className="badge-name">Century Club</span>
-                                <span className="badge-desc">
-                                    Reach 100 points
-                                </span>
-                            </div>
-                        </div>
-
-                        <div
-                            className={`achievement-badge ${
-                                user.role === "admin" ? "unlocked" : "locked"
+                                user?.role === "admin" ? "unlocked" : "locked"
                             }`}
                         >
                             <div className="badge-icon">👑</div>
@@ -403,22 +384,25 @@ export default function Profile() {
                                 <span className="badge-name">
                                     Administrator
                                 </span>
+                                <br />
                                 <span className="badge-desc">
                                     Special role privilege
                                 </span>
                             </div>
                         </div>
 
+                        {/* Veteran */}
                         <div
                             className={`achievement-badge ${
-                                isLongTimeMember(user.createdAt)
+                                isLongTimeMember(user?.createdAt)
                                     ? "unlocked"
                                     : "locked"
                             }`}
                         >
-                            <div className="badge-icon">🎯</div>
+                            <div className="badge-icon">🏅</div>
                             <div className="badge-info">
                                 <span className="badge-name">Veteran</span>
+                                <br />
                                 <span className="badge-desc">
                                     Member for 30+ days
                                 </span>
@@ -426,488 +410,8 @@ export default function Profile() {
                         </div>
                     </div>
                 </div>
-
-                {/* Activity Summary */}
-                {/* <div className="activity-section">
-                    <div className="section-header">
-                        <h2 className="section-title">📋 Account Details</h2>
-                    </div>
-
-                    <div className="activity-grid">
-                        <div className="activity-card">
-                            <div className="activity-label">User ID</div>
-                            <div className="activity-value">
-                                {user._id?.slice(-8) || "Unknown"}
-                            </div>
-                        </div>
-                        <div className="activity-card">
-                            <div className="activity-label">Account Type</div>
-                            <div className="activity-value">
-                                {user.role || "Standard"}
-                            </div>
-                        </div>
-                        <div className="activity-card">
-                            <div className="activity-label">Join Date</div>
-                            <div className="activity-value">{memberSince}</div>
-                        </div>
-                        <div className="activity-card">
-                            <div className="activity-label">Profile Status</div>
-                            <div className="activity-value">Active</div>
-                        </div>
-                    </div>
-                </div> */}
             </div>
         </div>
     );
 }
 
-// Helper functions
-function getAchievementCount(user) {
-    let count = 0;
-    if ((user.problemSolved || 0) >= 1) count++;
-    if ((user.problemSolved || 0) >= 5) count++;
-    if ((user.problemSolved || 0) >= 10) count++;
-    if ((user.score || 0) >= 100) count++;
-    if (user.role === "admin") count++;
-    if (isLongTimeMember(user.createdAt)) count++;
-    return count;
-}
-
-function isLongTimeMember(createdAt) {
-    if (!createdAt) return false;
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-    return new Date(createdAt) <= thirtyDaysAgo;
-}
-
-
-// --------------------------------------------------------------------------------------------------
-
-// import { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import "../styles/profile.css";
-// import server from "../enviornment.js";
-
-// const BASE_URL = import.meta.env.VITE_API_URL || `${server}/api/auth`;
-// const USE_COOKIES = false;
-
-// export default function Profile() {
-//     const [user, setUser] = useState(null);
-//     const [err, setErr] = useState("");
-//     const [loading, setLoading] = useState(true);
-//     const [refreshing, setRefreshing] = useState(false);
-//     const navigate = useNavigate();
-
-//     useEffect(() => {
-//         let abort = false;
-//         loadMe(abort);
-//         return () => {
-//             abort = true;
-//         };
-//     }, []);
-
-//     async function loadMe(abort = false) {
-//         setLoading(true);
-//         setErr("");
-//         try {
-//             const jwt = localStorage.getItem("jwt");
-//             const headers = { "Content-Type": "application/json" };
-//             if (!USE_COOKIES && jwt) headers.Authorization = `Bearer ${jwt}`;
-
-//             const res = await fetch(`${BASE_URL}/me`, {
-//                 method: "GET",
-//                 headers,
-//                 credentials: USE_COOKIES ? "include" : "omit",
-//             });
-
-//             const data = await res.json().catch(() => ({}));
-
-//             if (!res.ok) {
-//                 const message =
-//                     data?.message ||
-//                     (res.status === 401
-//                         ? "Not authenticated. Please log in."
-//                         : "Failed to load profile");
-//                 throw new Error(message);
-//             }
-
-//             const userDoc =
-//                 data?.data?.data || data?.data || data?.user || null;
-//             if (!abort) setUser(userDoc);
-//         } catch (e) {
-//             if (!abort) setErr(e.message || "Something went wrong");
-//         } finally {
-//             if (!abort) {
-//                 setLoading(false);
-//                 setRefreshing(false);
-//             }
-//         }
-//     }
-
-//     const handleRefresh = async () => {
-//         setRefreshing(true);
-//         await loadMe();
-//     };
-
-//     const handleBackToDashboard = () => {
-//         navigate("/dashboard");
-//     };
-
-//     const handleLogout = () => {
-//         localStorage.removeItem("jwt");
-//         setUser(null);
-//         navigate("/login");
-//     };
-
-//     const handleEditProfile = () => {
-//         console.log("Edit profile clicked");
-//     };
-
-//     if (loading) {
-//         return (
-//             <div className="profile-container">
-//                 <div className="loading-wrapper">
-//                     <div className="loading-spinner"></div>
-//                     <p className="loading-text">Loading your profile...</p>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     if (err) {
-//         return (
-//             <div className="profile-container">
-//                 <div className="error-wrapper">
-//                     <div className="error-icon">⚠️</div>
-//                     <div className="error-message">{err}</div>
-//                     <p className="error-description">
-//                         Unable to load your profile information.
-//                     </p>
-//                     <button onClick={handleRefresh} className="retry-btn">
-//                         <span className="retry-icon">↻</span>
-//                         Try Again
-//                     </button>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     if (!user) {
-//         return (
-//             <div className="profile-container">
-//                 <div className="empty-state">
-//                     <div className="empty-icon">👤</div>
-//                     <h3>No Profile Data</h3>
-//                     <p>We couldn't find any profile information.</p>
-//                     <button onClick={handleRefresh} className="retry-btn">
-//                         Refresh
-//                     </button>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     const getInitials = (name) => {
-//         if (!name) return "?";
-//         return name
-//             .split(" ")
-//             .map((n) => n[0])
-//             .join("")
-//             .toUpperCase()
-//             .slice(0, 2);
-//     };
-
-//     const formatDate = (date) => {
-//         if (!date) return "Unknown";
-//         return new Date(date).toLocaleDateString("en-US", {
-//             year: "numeric",
-//             month: "long",
-//             day: "numeric",
-//         });
-//     };
-
-//     return (
-//         <div className="profile-container">
-//             {/* Navigation Header */}
-//             <header className="navigation-header">
-//                 <button onClick={handleBackToDashboard} className="back-button">
-//                     <span className="back-icon">←</span>
-//                     <span className="back-text">Dashboard</span>
-//                 </button>
-//                 <h1 className="page-title">My Profile</h1>
-//                 <button onClick={handleLogout} className="logout-button">
-//                     <span className="logout-icon">⎋</span>
-//                     <span className="logout-text">Logout</span>
-//                 </button>
-//             </header>
-
-//             <div className="profile-content">
-//                 {/* Profile Header Card */}
-//                 <div className="profile-header-card">
-//                     <div className="profile-banner"></div>
-//                     <div className="profile-header">
-//                         <div className="avatar-section">
-//                             <div className="avatar">
-//                                 {user.profilePicture ? (
-//                                     <img
-//                                         src={user.profilePicture}
-//                                         alt={user.name}
-//                                         className="avatar-img"
-//                                     />
-//                                 ) : (
-//                                     <div className="avatar-placeholder">
-//                                         {getInitials(user.name)}
-//                                     </div>
-//                                 )}
-//                                 <div className="avatar-badge">✓</div>
-//                             </div>
-//                         </div>
-
-//                         <div className="profile-info">
-//                             <h2 className="profile-name">
-//                                 {user.name || "Anonymous User"}
-//                             </h2>
-//                             <p className="profile-email">
-//                                 {user.email || "No email provided"}
-//                             </p>
-
-//                             {user.bio && (
-//                                 <p className="profile-bio">{user.bio}</p>
-//                             )}
-
-//                             <div className="profile-meta">
-//                                 <span className="member-since">
-//                                     <span className="meta-icon">📅</span>
-//                                     Member since {formatDate(user.createdAt)}
-//                                 </span>
-//                                 {user.role && (
-//                                     <span className="user-role">
-//                                         <span className="meta-icon">⭐</span>
-//                                         {user.role}
-//                                     </span>
-//                                 )}
-//                             </div>
-//                         </div>
-
-//                         <div className="profile-actions">
-//                             <button
-//                                 onClick={handleEditProfile}
-//                                 className="edit-btn"
-//                             >
-//                                 <span className="edit-icon">✎</span>
-//                                 <span>Edit Profile</span>
-//                             </button>
-//                             <button
-//                                 onClick={handleRefresh}
-//                                 disabled={refreshing}
-//                                 className="refresh-btn"
-//                             >
-//                                 <span
-//                                     className={`refresh-icon ${
-//                                         refreshing ? "spinning" : ""
-//                                     }`}
-//                                 >
-//                                     ↻
-//                                 </span>
-//                                 <span>
-//                                     {refreshing ? "Refreshing..." : "Refresh"}
-//                                 </span>
-//                             </button>
-//                         </div>
-//                     </div>
-//                 </div>
-
-//                 {/* Statistics Section */}
-//                 <section className="stats-section">
-//                     <div className="section-header">
-//                         <h3 className="section-title">
-//                             Performance Statistics
-//                         </h3>
-//                         <span className="last-updated">
-//                             Last updated: {new Date().toLocaleDateString()}
-//                         </span>
-//                     </div>
-
-//                     <div className="stats-grid">
-//                         <div className="stat-card">
-//                             <div className="stat-icon problems-icon">
-//                                 <span>✓</span>
-//                             </div>
-//                             <div className="stat-info">
-//                                 <div className="stat-number">
-//                                     {user.problemsSolved || 0}
-//                                 </div>
-//                                 <div className="stat-label">
-//                                     Problems Solved
-//                                 </div>
-//                                 <div className="stat-progress">
-//                                     <div
-//                                         className="progress-bar"
-//                                         style={{
-//                                             width: `${Math.min(
-//                                                 ((user.problemsSolved || 0) /
-//                                                     500) *
-//                                                     100,
-//                                                 100
-//                                             )}%`,
-//                                         }}
-//                                     ></div>
-//                                 </div>
-//                             </div>
-//                         </div>
-
-//                         <div className="stat-card">
-//                             <div className="stat-icon score-icon">
-//                                 <span>★</span>
-//                             </div>
-//                             <div className="stat-info">
-//                                 <div className="stat-number">
-//                                     {user.score || 0}
-//                                 </div>
-//                                 <div className="stat-label">Total Score</div>
-//                                 <div className="stat-progress">
-//                                     <div
-//                                         className="progress-bar"
-//                                         style={{
-//                                             width: `${Math.min(
-//                                                 ((user.score || 0) / 10000) *
-//                                                     100,
-//                                                 100
-//                                             )}%`,
-//                                         }}
-//                                     ></div>
-//                                 </div>
-//                             </div>
-//                         </div>
-
-//                         <div className="stat-card">
-//                             <div className="stat-icon rank-icon">
-//                                 <span>🏆</span>
-//                             </div>
-//                             <div className="stat-info">
-//                                 <div className="stat-number">
-//                                     #{user.ranking || "N/A"}
-//                                 </div>
-//                                 <div className="stat-label">Global Rank</div>
-//                                 <div className="stat-progress">
-//                                     <div
-//                                         className="progress-bar"
-//                                         style={{ width: "75%" }}
-//                                     ></div>
-//                                 </div>
-//                             </div>
-//                         </div>
-
-//                         <div className="stat-card">
-//                             <div className="stat-icon activity-icon">
-//                                 <span>📊</span>
-//                             </div>
-//                             <div className="stat-info">
-//                                 <div className="stat-number">
-//                                     {user.activityStreak || 0}
-//                                 </div>
-//                                 <div className="stat-label">Day Streak</div>
-//                                 <div className="stat-progress">
-//                                     <div
-//                                         className="progress-bar"
-//                                         style={{
-//                                             width: `${Math.min(
-//                                                 ((user.activityStreak || 0) /
-//                                                     30) *
-//                                                     100,
-//                                                 100
-//                                             )}%`,
-//                                         }}
-//                                     ></div>
-//                                 </div>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </section>
-
-//                 {/* Achievements Section */}
-//                 {user.achievements && user.achievements.length > 0 && (
-//                     <section className="achievements-section">
-//                         <div className="section-header">
-//                             <h3 className="section-title">Achievements</h3>
-//                             <span className="achievements-count">
-//                                 {user.achievements.length} earned
-//                             </span>
-//                         </div>
-
-//                         <div className="achievements-grid">
-//                             {user.achievements.map((achievement, index) => (
-//                                 <div
-//                                     key={index}
-//                                     className={`achievement-badge ${
-//                                         achievement.unlocked
-//                                             ? "unlocked"
-//                                             : "locked"
-//                                     }`}
-//                                 >
-//                                     <span className="badge-icon">
-//                                         {achievement.icon || "🏅"}
-//                                     </span>
-//                                     <div className="badge-info">
-//                                         <div className="badge-name">
-//                                             {achievement.name || "Achievement"}
-//                                         </div>
-//                                         <div className="badge-desc">
-//                                             {achievement.description ||
-//                                                 "No description"}
-//                                         </div>
-//                                     </div>
-//                                 </div>
-//                             ))}
-//                         </div>
-//                     </section>
-//                 )}
-
-//                 {/* Activity Section */}
-//                 <section className="activity-section">
-//                     <div className="section-header">
-//                         <h3 className="section-title">Recent Activity</h3>
-//                     </div>
-
-//                     <div className="activity-grid">
-//                         <div className="activity-card">
-//                             <div className="activity-label">Last Login</div>
-//                             <div className="activity-value">
-//                                 {user.lastLogin
-//                                     ? formatDate(user.lastLogin)
-//                                     : "Never"}
-//                             </div>
-//                         </div>
-
-//                         <div className="activity-card">
-//                             <div className="activity-label">
-//                                 Total Submissions
-//                             </div>
-//                             <div className="activity-value">
-//                                 {user.totalSubmissions || 0}
-//                             </div>
-//                         </div>
-
-//                         <div className="activity-card">
-//                             <div className="activity-label">Success Rate</div>
-//                             <div className="activity-value">
-//                                 {user.successRate
-//                                     ? `${user.successRate}%`
-//                                     : "N/A"}
-//                             </div>
-//                         </div>
-
-//                         <div className="activity-card">
-//                             <div className="activity-label">
-//                                 Favorite Language
-//                             </div>
-//                             <div className="activity-value">
-//                                 {user.favoriteLanguage || "Not set"}
-//                             </div>
-//                         </div>
-//                     </div>
-//                 </section>
-//             </div>
-//         </div>
-//     );
-// }

@@ -1,13 +1,87 @@
-import React, { useEffect, useRef } from "react";
-import "../styles/CodeBuddy.css";
+import React, { useEffect, useRef, useState } from "react";
+import "../styles/Landing.css";
 import { useNavigate } from "react-router-dom";
 
-const CodeBuddy = () => {
-    const subtitleRef = useRef(null);
-    const Navigate = useNavigate();
+const Landing = () => {
+    const codeRef = useRef(null);
+    const navigate = useNavigate();
 
+    // State for subtitle text
+    const [subtitleText, setSubtitleText] = useState("");
+    const fullSubtitle =
+        "with real-time collaboration, live code editing, and competitive programming";
+
+    // NEW: Authentication check
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    // NEW: Check if user is logged in on mount
     useEffect(() => {
-        // Smooth scrolling for navigation links
+        const jwt = localStorage.getItem("jwt");
+        setIsLoggedIn(!!jwt);
+    }, []);
+
+    // Subtitle typing animation using state
+    useEffect(() => {
+        let index = 0;
+
+        const startTyping = setTimeout(() => {
+            const typeInterval = setInterval(() => {
+                if (index <= fullSubtitle.length) {
+                    setSubtitleText(fullSubtitle.slice(0, index));
+                    index++;
+                } else {
+                    clearInterval(typeInterval);
+                }
+            }, 50);
+
+            return () => clearInterval(typeInterval);
+        }, 1000);
+
+        return () => clearTimeout(startTyping);
+    }, []);
+
+    // Code typing animation
+    useEffect(() => {
+        const codeBlock = codeRef.current;
+        if (!codeBlock) return;
+
+        const codeText = `// DSA Problem: Two Sum
+function twoSum(nums, target) {
+  const map = new Map();
+  for (let i = 0; i < nums.length; i++) {
+    const complement = target - nums[i];
+    if (map.has(complement)) {
+      return [map.get(complement), i];
+    }
+    map.set(nums[i], i);
+  }
+  return [];
+}`;
+
+        codeBlock.textContent = "";
+        let index = 0;
+        let intervalId = null;
+
+        const timeout = setTimeout(() => {
+            intervalId = setInterval(() => {
+                if (index < codeText.length) {
+                    codeBlock.textContent += codeText.charAt(index);
+                    index++;
+                    codeBlock.scrollTop = codeBlock.scrollHeight;
+                } else {
+                    clearInterval(intervalId);
+                }
+            }, 30);
+        }, 2000);
+
+        return () => {
+            clearTimeout(timeout);
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, []);
+
+    // Smooth scrolling and intersection observer
+    useEffect(() => {
         const handleAnchorClick = (e) => {
             const href = e.target.getAttribute("href");
             if (href && href.startsWith("#")) {
@@ -24,7 +98,6 @@ const CodeBuddy = () => {
 
         document.addEventListener("click", handleAnchorClick);
 
-        // Add animation on scroll
         const observerOptions = {
             threshold: 0.1,
             rootMargin: "0px 0px -50px 0px",
@@ -38,55 +111,61 @@ const CodeBuddy = () => {
             });
         }, observerOptions);
 
-        // Observe all sections
         document.querySelectorAll("section").forEach((section) => {
             observer.observe(section);
         });
 
-        // Add subtle parallax effect to hero background
-        const handleScroll = () => {
-            const scrolled = window.pageYOffset;
-            const hero = document.querySelector(".hero");
-            if (hero) {
-                hero.style.transform = `translateY(${scrolled * 0.5}px)`;
-            }
-        };
-
-        window.addEventListener("scroll", handleScroll);
-
-        // Add typing effect for hero subtitle
-        const subtitle = subtitleRef.current;
-        if (subtitle) {
-            const text = subtitle.textContent;
-            subtitle.textContent = "";
-            let i = 0;
-
-            setTimeout(() => {
-                const typeWriter = setInterval(() => {
-                    if (i < text.length) {
-                        subtitle.textContent += text.charAt(i);
-                        i++;
-                    } else {
-                        clearInterval(typeWriter);
-                    }
-                }, 50);
-            }, 1000);
-        }
-
-        // Cleanup
         return () => {
             document.removeEventListener("click", handleAnchorClick);
-            window.removeEventListener("scroll", handleScroll);
             observer.disconnect();
         };
     }, []);
 
-    const handleFeatureCardHover = (e, isEntering) => {
-        if (isEntering) {
-            e.target.style.transform = "translateY(-10px) scale(1.02)";
-        } else {
-            e.target.style.transform = "translateY(0) scale(1)";
-        }
+    // Add this useState at the top with other state
+    const [showScrollTop, setShowScrollTop] = useState(false);
+
+    // Add this useEffect for scroll-to-top button
+    useEffect(() => {
+        const handleScroll = () => {
+            setShowScrollTop(window.pageYOffset > 400);
+        };
+
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
+
+    const scrollToTop = () => {
+        window.scrollTo({
+            top: 0,
+            behavior: "smooth",
+        });
+    };
+
+    // Add this button before the closing </div> of codebuddy-app
+    {
+        showScrollTop && (
+            <button
+                className="scroll-to-top"
+                onClick={scrollToTop}
+                aria-label="Scroll to top"
+            >
+                <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                >
+                    <path d="M18 15l-6-6-6 6" />
+                </svg>
+            </button>
+        );
+    }
+
+    const handleNavigation = () => {
+        if (isLoggedIn) navigate("/dashboard");
+        else navigate("/signup");
     };
 
     return (
@@ -102,76 +181,75 @@ const CodeBuddy = () => {
                         <li>
                             <a href="#how-it-works">How It Works</a>
                         </li>
-                        <li>
-                            <a href="#testimonials">Reviews</a>
-                        </li>
-                        <li>
-                            <a href="#pricing">Pricing</a>
-                        </li>
                     </ul>
-                    <button
-                        onClick={() => Navigate("/signup")}
-                        className="nav-cta"
-                    >
-                        Get Started
-                    </button>
+                    {/* NEW: Dynamic nav button based on login status */}
+                    {isLoggedIn ? (
+                        <button
+                            onClick={() => navigate("/dashboard")}
+                            className="nav-cta-button"
+                        >
+                            Dashboard
+                        </button>
+                    ) : (
+                        <button
+                            onClick={() => navigate("/login")}
+                            className="nav-cta-button"
+                        >
+                            Login
+                        </button>
+                    )}
                 </div>
             </nav>
 
             {/* Hero Section */}
-            <section className="hero">
+            <section className="hero" id="home">
                 <div className="container">
                     <div className="hero-content">
-                        <h1>Practice DSA, Collaborate Live, Learn Together</h1>
-                        <p className="hero-subtitle" ref={subtitleRef}>
-                            Master Data Structures & Algorithms with real-time
-                            collaboration, live code editing, and competitive
-                            programming
-                        </p>
-                        <a href="#signup" className="hero-cta">
-                            Join Now - It's Free
-                        </a>
+                        <h1>Master Data Structures & Algorithms</h1>
+                        <p className="hero-subtitle">{subtitleText}</p>
+                        <button
+                            onClick={handleNavigation}
+                            className="hero-cta"
+                            aria-label="Start coding now"
+                        >
+                            Start Coding Now
+                        </button>
                     </div>
-                </div>
-                <div className="code-visual">
-                    {`// DSA Problem: Two Sum
-function twoSum(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const complement = target - nums[i];
-    if (map.has(complement)) {
-      return [map.get(complement), i];
-    }
-    map.set(nums[i], i);
-  }
-  return [];
-}`}
+
+                    {/* Code Visual */}
+                    <div className="code-visual-container">
+                        <div className="code-visual">
+                            <div className="code-header">
+                                <div className="code-dots">
+                                    <span className="dot red"></span>
+                                    <span className="dot yellow"></span>
+                                    <span className="dot green"></span>
+                                </div>
+                                <div className="code-title">solution.js</div>
+                                <div className="code-language">JavaScript</div>
+                            </div>
+                            <div className="code-body">
+                                <pre>
+                                    <code ref={codeRef}></code>
+                                </pre>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </section>
 
             {/* Features Section */}
             <section className="features" id="features">
                 <div className="container">
-                    <h2 className="section-title">
-                        Powerful DSA Learning Platform
-                    </h2>
+                    <h2 className="section-title">Powerful Features</h2>
                     <p className="section-subtitle">
                         Everything you need to master algorithms and data
                         structures through collaborative coding
                     </p>
-
                     <div className="features-grid">
-                        <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
-                            <div className="feature-icon">👥</div>
-                            <h3>Real-time Code Collaboration</h3>
+                        <div className="feature-card">
+                            <div className="feature-icon">💻</div>
+                            <h3>Real-time Collaboration</h3>
                             <p>
                                 Code together in real-time with Monaco Editor.
                                 Share ideas, debug together, and solve DSA
@@ -179,16 +257,7 @@ function twoSum(nums, target) {
                                 technology.
                             </p>
                         </div>
-
-                        <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
+                        <div className="feature-card">
                             <div className="feature-icon">⚡</div>
                             <h3>Instant Code Execution</h3>
                             <p>
@@ -198,115 +267,67 @@ function twoSum(nums, target) {
                                 solutions.
                             </p>
                         </div>
-
-                        <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
+                        <div className="feature-card">
                             <div className="feature-icon">💬</div>
-                            <h3>Live Chat System</h3>
+                            <h3>Interactive Chat</h3>
                             <p>
                                 Discuss algorithms and approaches with
                                 room-based chat. Get real-time help from peers
                                 and mentors while solving problems.
                             </p>
                         </div>
-
-                        <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
+                        <div className="feature-card">
                             <div className="feature-icon">🏆</div>
-                            <h3>Competitive Leaderboard</h3>
+                            <h3>Leaderboard & XP</h3>
                             <p>
                                 Track your progress and compete with others.
                                 Earn XP for solving problems and climb the
                                 leaderboard rankings.
                             </p>
                         </div>
-
-                        <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
+                        <div className="feature-card">
                             <div className="feature-icon">📚</div>
-                            <h3>Curated DSA Problems</h3>
+                            <h3>Comprehensive Library</h3>
                             <p>
                                 Access a comprehensive library of Data
                                 Structures and Algorithms problems ranging from
                                 easy to expert level with detailed solutions.
                             </p>
                         </div>
-
-                        {/* <div
-                            className="feature-card"
-                            onMouseEnter={(e) =>
-                                handleFeatureCardHover(e, true)
-                            }
-                            onMouseLeave={(e) =>
-                                handleFeatureCardHover(e, false)
-                            }
-                        >
-                            <div className="feature-icon">🔍</div>
-                            <h3>Discussion Forums</h3>
-                            <p>
-                                Engage in problem discussions, share different
-                                approaches, upvote solutions, and learn from the
-                                community's collective wisdom.
-                            </p>
-                        </div> */}
                     </div>
                 </div>
             </section>
 
-            {/* How It Works */}
+            {/* How It Works Section */}
             <section className="how-it-works" id="how-it-works">
                 <div className="container">
-                    <h2 className="section-title">How CodeBuddy Works</h2>
+                    <h2 className="section-title">How It Works</h2>
                     <p className="section-subtitle">
                         Master DSA through collaborative learning in three
                         simple steps
                     </p>
-
                     <div className="steps-container">
                         <div className="step">
                             <div className="step-number">1</div>
-                            <h3>Sign Up & Join a Room</h3>
+                            <h3>Sign Up & Browse</h3>
                             <p>
                                 Create your account, browse our DSA problem
                                 library, and either solve alone or create a
                                 collaboration room to invite friends.
                             </p>
                         </div>
-
                         <div className="step">
                             <div className="step-number">2</div>
-                            <h3>Code & Collaborate Live</h3>
+                            <h3>Code & Collaborate</h3>
                             <p>
                                 Use our Monaco Editor to write code in real-time
                                 with others. Chat, discuss approaches, and run
                                 your code instantly with Judge0 API.
                             </p>
                         </div>
-
                         <div className="step">
                             <div className="step-number">3</div>
-                            <h3>Learn & Compete</h3>
+                            <h3>Submit & Learn</h3>
                             <p>
                                 Submit solutions, earn XP, climb the
                                 leaderboard, and engage in community discussions
@@ -317,81 +338,22 @@ function twoSum(nums, target) {
                 </div>
             </section>
 
-            {/* Testimonials */}
-            <section className="testimonials" id="testimonials">
-                <div className="container">
-                    <h2 className="section-title">
-                        Loved by Developers Worldwide
-                    </h2>
-                    <p className="section-subtitle">
-                        See what our community has to say about their CodeBuddy
-                        experience
-                    </p>
-
-                    <div className="testimonials-grid">
-                        <div className="testimonial-card">
-                            <p className="testimonial-text">
-                                "CodeBuddy revolutionized how I prepare for
-                                coding interviews. The real-time collaboration
-                                helped me understand different approaches to
-                                solving algorithms problems."
-                            </p>
-                            <div className="testimonial-author">
-                                <div className="author-avatar">AM</div>
-                                <div className="author-info">
-                                    <h4>Anika Miller</h4>
-                                    <p>Software Engineer at Google</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="testimonial-card">
-                            <p className="testimonial-text">
-                                "The live chat feature while solving DSA
-                                problems is amazing. Being able to discuss
-                                approaches with peers in real-time made learning
-                                so much more effective."
-                            </p>
-                            <div className="testimonial-author">
-                                <div className="author-avatar">RK</div>
-                                <div className="author-info">
-                                    <h4>Roshan Kumar</h4>
-                                    <p>CS Student, IIT Delhi</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="testimonial-card">
-                            <p className="testimonial-text">
-                                "The leaderboard system keeps me motivated to
-                                solve more problems. The Monaco Editor with
-                                instant code execution makes the whole
-                                experience smooth and professional."
-                            </p>
-                            <div className="testimonial-author">
-                                <div className="author-avatar">PG</div>
-                                <div className="author-info">
-                                    <h4>Priya Gupta</h4>
-                                    <p>SDE at Microsoft</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             {/* CTA Section */}
-            <section className="cta-section" id="signup">
+            <section className="cta-section">
                 <div className="container">
-                    <h2>Start Your DSA Journey Today</h2>
+                    <h2>Ready to Master DSA?</h2>
                     <p>
                         Join thousands of students and professionals mastering
                         Data Structures & Algorithms through collaborative
                         learning. Practice, compete, and grow together.
                     </p>
-                    <a href="#" className="cta-button">
-                        Get Started for Free
-                    </a>
+                    <button
+                        onClick={() => handleNavigation("/signup")}
+                        className="cta-button"
+                        aria-label="Get started for free"
+                    >
+                        <span>Get Started Free</span>
+                    </button>
                 </div>
             </section>
 
@@ -402,69 +364,36 @@ function twoSum(nums, target) {
                         <div className="footer-section">
                             <h3>CodeBuddy</h3>
                             <p>
-                                Your personal coding assistant that helps you
-                                learn, collaborate, and build amazing projects.
-                                Join our community of passionate developers.
+                                Master Data Structures & Algorithms through
+                                collaborative learning and competitive
+                                programming.
                             </p>
+                        </div>
+                        <div className="footer-section">
+                            <h3>Quick Links</h3>
+                            <a href="#features">Features</a>
+                            <a href="#how-it-works">How It Works</a>
+                        </div>
+                        <div className="footer-section">
+                            <h3>Connect with Us</h3>
                             <div className="social-links">
-                                <a href="#">📘</a>
-                                <a href="#">🐦</a>
-                                <a href="#">💼</a>
-                                <a href="#">📸</a>
+                                <a href="#" aria-label="GitHub">
+                                    SD
+                                </a>
+                                <a href="#" aria-label="Twitter">
+                                    VG
+                                </a>
+                                <a
+                                    href="https://www.linkedin.com/in/roshan-malkar-8670b4218/"
+                                    aria-label="LinkedIn"
+                                >
+                                    RM
+                                </a>
                             </div>
                         </div>
-
-                        <div className="footer-section">
-                            <h3>Product</h3>
-                            <p>
-                                <a href="#">Features</a>
-                            </p>
-                            <p>
-                                <a href="#">Pricing</a>
-                            </p>
-                            <p>
-                                <a href="#">API</a>
-                            </p>
-                            <p>
-                                <a href="#">Integrations</a>
-                            </p>
-                        </div>
-
-                        <div className="footer-section">
-                            <h3>Resources</h3>
-                            <p>
-                                <a href="#">Documentation</a>
-                            </p>
-                            <p>
-                                <a href="#">Tutorials</a>
-                            </p>
-                            <p>
-                                <a href="#">Blog</a>
-                            </p>
-                            <p>
-                                <a href="#">Community</a>
-                            </p>
-                        </div>
-
-                        <div className="footer-section">
-                            <h3>Company</h3>
-                            <p>
-                                <a href="#">About</a>
-                            </p>
-                            <p>
-                                <a href="#">Careers</a>
-                            </p>
-                            <p>
-                                <a href="#">Privacy Policy</a>
-                            </p>
-                            <p>
-                                <a href="#">Terms of Service</a>
-                            </p>
-                        </div>
                     </div>
-
                     <div className="footer-bottom">
-                        <p>&copy; 2025 CodeBuddy. All rights reserved.</p>
+                        <p>&copy; 2024 CodeBuddy. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
@@ -472,4 +401,4 @@ function twoSum(nums, target) {
     );
 };
 
-export default CodeBuddy;
+export default Landing;

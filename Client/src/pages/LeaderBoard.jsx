@@ -1,31 +1,63 @@
-// -----------------------------------------------------------------------------------------------------------------------
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import "../styles/leaderboard.css";
+import "../styles/LeaderBoard.css";
 import server from "../enviornment";
 
 export default function Leaderboard() {
     const [leaders, setLeaders] = useState([]);
+    const [filteredLeaders, setFilteredLeaders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [autoRefresh, setAutoRefresh] = useState(true);
+    const [lastUpdate, setLastUpdate] = useState(new Date());
     const navigate = useNavigate();
 
-    useEffect(() => {
-        const fetchLeaderboard = async () => {
-            try {
-                const res = await fetch(`${server}/api/leaderboard`);
-                if (!res.ok) throw new Error("Failed to fetch leaderboard");
-                const data = await res.json();
-                setLeaders(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
+    const getCurrentUserEmail = () => {
+        // Try multiple possible storage locations
+        return localStorage.getItem("userEmail");
+    };
 
-        fetchLeaderboard();
+    const currentUserEmail = getCurrentUserEmail();
+
+    const fetchLeaderboard = useCallback(async () => {
+        try {
+            const res = await fetch(`${server}/api/leaderboard`);
+            if (!res.ok) throw new Error("Failed to fetch leaderboard");
+            const data = await res.json();
+            setLeaders(data);
+            setFilteredLeaders(data);
+            setLastUpdate(new Date());
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchLeaderboard();
+    }, [fetchLeaderboard]);
+
+    useEffect(() => {
+        if (!autoRefresh) return;
+        const interval = setInterval(() => {
+            fetchLeaderboard();
+        }, 30000);
+        return () => clearInterval(interval);
+    }, [autoRefresh, fetchLeaderboard]);
+
+    useEffect(() => {
+        if (searchQuery.trim() === "") {
+            setFilteredLeaders(leaders);
+        } else {
+            const filtered = leaders.filter((leader) =>
+                leader.name.toLowerCase().includes(searchQuery.toLowerCase())
+            );
+            setFilteredLeaders(filtered);
+        }
+    }, [searchQuery, leaders]);
 
     const getRankDisplay = (index) => {
         switch (index) {
@@ -42,536 +74,358 @@ export default function Leaderboard() {
 
     const handleRefresh = () => {
         setLoading(true);
-        setError(null);
-        const fetchLeaderboard = async () => {
-            try {
-                const res = await fetch(`${server}/api/leaderboard`);
-                if (!res.ok) throw new Error("Failed to fetch leaderboard");
-                const data = await res.json();
-                setLeaders(data);
-            } catch (err) {
-                setError(err.message);
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchLeaderboard();
     };
 
-    const handleBackToDashboard = () => {
-        navigate("/dashboard"); // Navigate to dashboard
+    const getInitials = (name) => {
+        return name
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2);
     };
 
-    if (loading)
+    const isCurrentUser = (leaderEmail) => {
+        return leaderEmail === currentUserEmail;
+    };
+
+    if (loading && leaders.length === 0) {
         return (
             <div className="leaderboard-container">
                 <div className="loading-wrapper">
-                    <p className="loading">Loading leaderboard...</p>
+                    <div className="loading">Loading leaderboard...</div>
                 </div>
             </div>
         );
+    }
 
-    if (error)
+    if (error && leaders.length === 0) {
         return (
             <div className="leaderboard-container">
                 <div className="error-wrapper">
-                    <p className="error">Error: {error}</p>
+                    <div className="error">Error: {error}</div>
                     <button className="retry-btn" onClick={handleRefresh}>
                         Try Again
                     </button>
                 </div>
             </div>
         );
+    }
+
+    const top3 = leaders.slice(0, 3);
 
     return (
         <div className="leaderboard-container">
-            {/* Navigation Header */}
-            <div className="navigation-header">
-                <button className="back-button" onClick={handleBackToDashboard}>
-                    <span className="back-icon">←</span>
-                    <span className="back-text">Dashboard</span>
+            {/* Header with Back Button and Title */}
+            <div className="leaderboard-header-bar">
+                <button className="back-button" onClick={() => navigate(-1)}>
+                    <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2.5"
+                    >
+                        <path d="M19 12H5M12 19l-7-7 7-7" />
+                    </svg>
+                    <span>Back</span>
                 </button>
+                <h1 className="leaderboard-main-title">
+                    <span className="title-icon">🏆</span>
+                    Leaderboard
+                </h1>
+            </div>
 
-                <div className="page-title">
-                    <h1 className="leaderboard-title">🏆 Leaderboard</h1>
+            {/* Stats Cards Row */}
+            <div className="stats-cards">
+                <div className="stat-card-item">
+                    <div className="stat-icon">👥</div>
+                    <div className="stat-info">
+                        <div className="stat-number">{leaders.length}</div>
+                        <div className="stat-label">Total Users</div>
+                    </div>
+                </div>
+                <div className="stat-card-item">
+                    <div className="stat-icon">🎯</div>
+                    <div className="stat-info">
+                        <div className="stat-number">
+                            {leaders.reduce(
+                                (sum, l) => sum + l.problemSolved,
+                                0
+                            )}
+                        </div>
+                        <div className="stat-label">Problems Solved</div>
+                    </div>
+                </div>
+                <div className="stat-card-item">
+                    <div className="stat-icon">⭐</div>
+                    <div className="stat-info">
+                        <div className="stat-number">
+                            {leaders.length > 0 ? leaders[0].score : 0}
+                        </div>
+                        <div className="stat-label">Top Score</div>
+                    </div>
                 </div>
             </div>
 
-            {/* Header Section */}
-            <div className="leaderboard-header">
-                {/* <div className="header-content">
-                    <p className="leaderboard-subtitle">
-                        Top performers in our coding community
-                    </p>
-                </div> */}
-
-                {/* Stats Cards */}
-                <div className="stats-container">
-                    <div className="stat-card">
-                        <div className="stat-icon">👥</div>
-                        <div className="stat-info">
-                            <span className="stat-number">
-                                {leaders.length}
-                            </span>
-                            <span className="stat-label">
-                                Total Participants
-                            </span>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">🧩</div>
-                        <div className="stat-info">
-                            <span className="stat-number">
-                                {leaders.reduce(
-                                    (sum, user) =>
-                                        sum + (user.problemSolved || 0),
-                                    0
-                                )}
-                            </span>
-                            <span className="stat-label">Problems Solved</span>
-                        </div>
-                    </div>
-                    <div className="stat-card">
-                        <div className="stat-icon">⭐</div>
-                        <div className="stat-info">
-                            <span className="stat-number">
-                                {leaders.reduce(
-                                    (sum, user) => sum + (user.score || 0),
-                                    0
-                                )}
-                            </span>
-                            <span className="stat-label">Total Points</span>
-                        </div>
-                    </div>
+            {/* Controls Section */}
+            <div className="controls-section">
+                <div className="search-wrapper">
+                    <svg
+                        className="search-icon"
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                    >
+                        <circle cx="11" cy="11" r="8" />
+                        <path d="m21 21-4.35-4.35" />
+                    </svg>
+                    <input
+                        type="text"
+                        className="search-input"
+                        placeholder="Search by name..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    {searchQuery && (
+                        <button
+                            className="clear-search"
+                            onClick={() => setSearchQuery("")}
+                            aria-label="Clear search"
+                        >
+                            ✕
+                        </button>
+                    )}
                 </div>
-
-                {/* Controls */}
-                <div className="controls-container">
+                <div className="control-buttons">
                     <button className="refresh-btn" onClick={handleRefresh}>
-                        <span className="refresh-icon">🔄</span>
+                        <span className="btn-icon">🔄</span>
                         Refresh
+                    </button>
+                    <button
+                        className={`auto-refresh-btn ${
+                            autoRefresh ? "active" : ""
+                        }`}
+                        onClick={() => setAutoRefresh(!autoRefresh)}
+                        title={
+                            autoRefresh ? "Auto-refresh ON" : "Auto-refresh OFF"
+                        }
+                    >
+                        <span className="status-dot">
+                            {autoRefresh ? "●" : "○"}
+                        </span>
+                        Auto-Refresh
                     </button>
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="leaderboard-content">
-                {leaders.length === 0 ? (
-                    <div className="empty-state">
-                        <div className="empty-icon">📊</div>
-                        <h3>No Data Available</h3>
-                        <p>
-                            Be the first to solve problems and appear on the
-                            leaderboard!
+            {/* Top 3 Podium */}
+            {top3.length >= 3 && (
+                <div className="podium-section">
+                    <div className="section-header">
+                        <h2 className="section-title">Top 3 Champions</h2>
+
+                        <p className="section-subtitle">
+                            Our top performers this season
                         </p>
-                        <button className="refresh-btn" onClick={handleRefresh}>
-                            Check Again
-                        </button>
+                    </div>
+                    <div className="podium">
+                        {/* Second Place */}
+                        <div className="podium-item second">
+                            <div className="podium-rank-badge silver-badge">
+                                <span className="rank-icon">🥈</span>
+                            </div>
+                            <div className="podium-avatar silver-avatar">
+                                {getInitials(top3[1].name)}
+                            </div>
+                            <div className="podium-details">
+                                <div className="podium-name">
+                                    {top3[1].name}
+                                </div>
+                                <div className="podium-stats">
+                                    <span className="stat-item">
+                                        {top3[1].problemSolved} problems
+                                    </span>
+                                    <span className="stat-item">
+                                        {top3[1].score} XP
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="podium-base silver">2nd</div>
+                        </div>
+
+                        {/* First Place */}
+                        <div className="podium-item first">
+                            <div className="podium-rank-badge gold-badge">
+                                <span className="rank-icon">🥇</span>
+                            </div>
+                            <div className="podium-avatar gold-avatar">
+                                {getInitials(top3[0].name)}
+                            </div>
+                            <div className="podium-details">
+                                <div className="podium-name">
+                                    {top3[0].name}
+                                </div>
+                                <div className="podium-stats">
+                                    <span className="stat-item">
+                                        {top3[0].problemSolved} problems
+                                    </span>
+                                    <span className="stat-item">
+                                        {top3[0].score} XP
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="podium-base gold">1st</div>
+                        </div>
+
+                        {/* Third Place */}
+                        <div className="podium-item third">
+                            <div className="podium-rank-badge bronze-badge">
+                                <span className="rank-icon">🥉</span>
+                            </div>
+                            <div className="podium-avatar bronze-avatar">
+                                {getInitials(top3[2].name)}
+                            </div>
+                            <div className="podium-details">
+                                <div className="podium-name">
+                                    {top3[2].name}
+                                </div>
+                                <div className="podium-stats">
+                                    <span className="stat-item">
+                                        {top3[2].problemSolved} problems
+                                    </span>
+                                    <span className="stat-item">
+                                        {top3[2].score} XP
+                                    </span>
+                                </div>
+                            </div>
+                            <div className="podium-base bronze">3rd</div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Rankings Table */}
+            <div className="rankings-section">
+                <div className="section-header">
+                    <div>
+                        <h2 className="section-title">
+                            All Rankings
+                            {searchQuery && (
+                                <span className="search-count">
+                                    ({filteredLeaders.length})
+                                </span>
+                            )}
+                        </h2>
+                        <p className="last-updated">
+                            Updated {lastUpdate.toLocaleTimeString()}
+                        </p>
+                    </div>
+                </div>
+
+                {filteredLeaders.length === 0 ? (
+                    <div className="empty-state">
+                        <div className="empty-icon">
+                            {searchQuery ? "🔍" : "🏆"}
+                        </div>
+                        <h3>
+                            {searchQuery ? "No users found" : "No rankings yet"}
+                        </h3>
+                        <p>
+                            {searchQuery
+                                ? "Try searching with a different name"
+                                : "Be the first to solve problems and claim your spot!"}
+                        </p>
                     </div>
                 ) : (
-                    <>
-                        {/* Top 3 Podium */}
-                        {leaders.length >= 3 && (
-                            <div className="podium-container">
-                                <div className="podium-title">
-                                    🌟 Top Performers 🌟
-                                </div>
-                                <div className="podium">
-                                    {/* Second Place */}
-                                    <div className="podium-item second">
-                                        <div className="podium-avatar">
-                                            {leaders[1]?.name
-                                                ?.charAt(0)
-                                                ?.toUpperCase() || "U"}
-                                        </div>
-                                        <div className="podium-name">
-                                            {leaders[1]?.name || "Unknown"}
-                                        </div>
-                                        <div className="podium-score">
-                                            {leaders[1]?.score || 0} pts
-                                        </div>
-                                        <div className="podium-rank">🥈</div>
-                                        <div className="podium-base silver">
-                                            2
-                                        </div>
-                                    </div>
-
-                                    {/* First Place */}
-                                    <div className="podium-item first">
-                                        <div className="podium-avatar">
-                                            {leaders[0]?.name
-                                                ?.charAt(0)
-                                                ?.toUpperCase() || "U"}
-                                        </div>
-                                        <div className="podium-name">
-                                            {leaders[0]?.name || "Unknown"}
-                                        </div>
-                                        <div className="podium-score">
-                                            {leaders[0]?.score || 0} pts
-                                        </div>
-                                        <div className="podium-rank">🥇</div>
-                                        <div className="podium-base gold">
-                                            1
-                                        </div>
-                                    </div>
-
-                                    {/* Third Place */}
-                                    <div className="podium-item third">
-                                        <div className="podium-avatar">
-                                            {leaders[2]?.name
-                                                ?.charAt(0)
-                                                ?.toUpperCase() || "U"}
-                                        </div>
-                                        <div className="podium-name">
-                                            {leaders[2]?.name || "Unknown"}
-                                        </div>
-                                        <div className="podium-score">
-                                            {leaders[2]?.score || 0} pts
-                                        </div>
-                                        <div className="podium-rank">🥉</div>
-                                        <div className="podium-base bronze">
-                                            3
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Full Leaderboard Table */}
-                        <div className="table-section">
-                            <div className="table-header-section">
-                                <h2 className="table-title">
-                                    Complete Rankings
-                                </h2>
-                                <div className="last-updated">
-                                    Last updated:{" "}
-                                    {new Date().toLocaleTimeString()}
-                                </div>
-                            </div>
-
-                            <table className="leaderboard-table">
-                                <thead>
-                                    <tr>
-                                        <th>Rank</th>
-                                        <th>User</th>
-                                        <th>Problems Solved</th>
-                                        <th>Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {leaders.map((user, index) => (
-                                        <tr key={user._id}>
-                                            <td className="rank-cell">
+                    <div className="rankings-table-wrapper">
+                        <table className="rankings-table">
+                            <thead>
+                                <tr>
+                                    <th className="rank-col">Rank</th>
+                                    <th className="user-col">User</th>
+                                    <th className="problems-col">Problems</th>
+                                    <th className="score-col">Score</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {filteredLeaders.map((leader, index) => (
+                                    <tr
+                                        key={leader._id}
+                                        className={`ranking-row ${
+                                            isCurrentUser(leader.email)
+                                                ? "current-user"
+                                                : ""
+                                        }`}
+                                    >
+                                        <td className="rank-col">
+                                            <div className="rank-badge">
                                                 {getRankDisplay(index)}
-                                            </td>
-                                            <td className="user-cell">
-                                                <div className="user-info">
-                                                    <div className="user-avatar-small">
-                                                        {user.name
-                                                            ?.charAt(0)
-                                                            ?.toUpperCase() ||
-                                                            "U"}
+                                            </div>
+                                        </td>
+                                        <td className="user-col">
+                                            <div className="user-cell">
+                                                <div className="user-avatar">
+                                                    {getInitials(leader.name)}
+                                                </div>
+                                                <div className="user-details">
+                                                    <div className="user-name">
+                                                        {leader.name}
+                                                        {isCurrentUser(
+                                                            leader.email
+                                                        ) && (
+                                                            <span className="you-tag">
+                                                                You
+                                                            </span>
+                                                        )}
                                                     </div>
-                                                    <span className="user-name">
-                                                        {user.name ||
-                                                            "Unknown User"}
-                                                    </span>
                                                 </div>
-                                            </td>
-                                            <td className="problems-cell">
-                                                <div className="cell-content">
-                                                    <span className="main-number">
-                                                        {user.problemSolved ||
-                                                            0}
-                                                    </span>
-                                                    <span className="sub-text">
-                                                        problems
-                                                    </span>
-                                                </div>
-                                            </td>
-                                            <td className="score-cell">
-                                                <div className="cell-content">
-                                                    <span className="main-number">
-                                                        {user.score || 0}
-                                                    </span>
-                                                    <span className="sub-text">
-                                                        points
-                                                    </span>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </>
+                                            </div>
+                                        </td>
+                                        <td className="problems-col">
+                                            <div className="table-stat">
+                                                <span className="stat-value">
+                                                    {leader.problemSolved}
+                                                </span>
+                                                <span className="stat-text">
+                                                    solved
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td className="score-col">
+                                            <div className="table-stat highlight">
+                                                <span className="stat-value">
+                                                    {leader.score}
+                                                </span>
+                                                <span className="stat-text">
+                                                    XP
+                                                </span>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
 
             {/* Footer */}
             <div className="leaderboard-footer">
-                <div className="footer-content">
-                    <p>🎯 Keep solving problems to climb up the leaderboard!</p>
-                    <div className="footer-links">
-                        <a className="footer-link" href="/">
-                            Go To Home
-                        </a>
-                        <span className="separator">•</span>
-                        <a className="footer-link" href="/dashboard">
-                            Practice Problems
-                        </a>
-                        <span className="separator">•</span>
-                        <span className="footer-link">Community</span>
-                    </div>
+                <p>Keep solving problems to climb the ranks! 🚀</p>
+                <div className="footer-links">
+                    <a onClick={() => navigate("/dashboard")}>Dashboard</a>
+                    <span>•</span>
+                    <a onClick={() => navigate("/dashboard")}>Problems</a>
+                    <span>•</span>
+                    <a onClick={() => navigate("/")}>Home</a>
                 </div>
             </div>
         </div>
     );
 }
-
-// --------------------------------------------------------------------------------------------------------------------------------
-
-// import React, { useEffect, useState } from "react";
-// import { useNavigate } from "react-router-dom";
-// import "../styles/leaderboard.css";
-// import server from "../enviornment";
-
-// export default function Leaderboard() {
-//     const [leaders, setLeaders] = useState([]);
-//     const [loading, setLoading] = useState(true);
-//     const [error, setError] = useState(null);
-//     const navigate = useNavigate();
-
-//     useEffect(() => {
-//         fetchLeaderboard();
-//     }, []);
-
-//     const fetchLeaderboard = async () => {
-//         try {
-//             setLoading(true);
-//             setError(null);
-//             const res = await fetch(`${server}/api/leaderboard`);
-//             if (!res.ok) throw new Error("Failed to fetch leaderboard");
-//             const data = await res.json();
-//             setLeaders(data);
-//         } catch (err) {
-//             setError(err.message);
-//         } finally {
-//             setLoading(false);
-//         }
-//     };
-
-//     const getRankDisplay = (index) => {
-//         switch (index) {
-//             case 0:
-//                 return "🥇";
-//             case 1:
-//                 return "🥈";
-//             case 2:
-//                 return "🥉";
-//             default:
-//                 return index + 1;
-//         }
-//     };
-
-//     const handleBackToDashboard = () => {
-//         navigate("/dashboard");
-//     };
-
-//     if (loading) {
-//         return (
-//             <div className="page-wrapper">
-//                 <div className="loader-container">
-//                     <div className="loader"></div>
-//                     <p>Loading leaderboard...</p>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     if (error) {
-//         return (
-//             <div className="page-wrapper">
-//                 <div className="error-container">
-//                     <div className="error-icon">⚠️</div>
-//                     <h2>Something went wrong</h2>
-//                     <p>{error}</p>
-//                     <button className="btn-primary" onClick={fetchLeaderboard}>
-//                         Try Again
-//                     </button>
-//                 </div>
-//             </div>
-//         );
-//     }
-
-//     return (
-//         <div className="page-wrapper">
-//             <div className="leaderboard-container">
-//                 {/* Header */}
-//                 <div className="header">
-//                     <button
-//                         className="btn-back"
-//                         onClick={handleBackToDashboard}
-//                     >
-//                         ← Back
-//                     </button>
-//                     <h1 className="title">Leaderboard</h1>
-//                     <button className="btn-refresh" onClick={fetchLeaderboard}>
-//                         ↻ Refresh
-//                     </button>
-//                 </div>
-
-//                 {/* Stats Bar */}
-//                 <div className="stats-bar">
-//                     <div className="stat-item">
-//                         <span className="stat-value">{leaders.length}</span>
-//                         <span className="stat-label">Users</span>
-//                     </div>
-//                     <div className="stat-divider"></div>
-//                     <div className="stat-item">
-//                         <span className="stat-value">
-//                             {leaders.reduce(
-//                                 (sum, u) => sum + (u.problemSolved || 0),
-//                                 0
-//                             )}
-//                         </span>
-//                         <span className="stat-label">Problems Solved</span>
-//                     </div>
-//                     <div className="stat-divider"></div>
-//                     <div className="stat-item">
-//                         <span className="stat-value">
-//                             {leaders.reduce(
-//                                 (sum, u) => sum + (u.score || 0),
-//                                 0
-//                             )}
-//                         </span>
-//                         <span className="stat-label">Total Points</span>
-//                     </div>
-//                 </div>
-
-//                 {/* Top 3 Podium */}
-//                 {leaders.length >= 3 && (
-//                     <div className="podium">
-//                         <div className="podium-card second-place">
-//                             <div className="podium-rank">2nd</div>
-//                             <div className="podium-avatar">
-//                                 {leaders[1]?.name?.charAt(0)?.toUpperCase() ||
-//                                     "?"}
-//                             </div>
-//                             <div className="podium-name">
-//                                 {leaders[1]?.name || "Unknown"}
-//                             </div>
-//                             <div className="podium-stats">
-//                                 <span className="podium-score">
-//                                     {leaders[1]?.score || 0} pts
-//                                 </span>
-//                                 <span className="podium-problems">
-//                                     {leaders[1]?.problemSolved || 0} solved
-//                                 </span>
-//                             </div>
-//                         </div>
-
-//                         <div className="podium-card first-place">
-//                             <div className="crown">👑</div>
-//                             <div className="podium-rank">1st</div>
-//                             <div className="podium-avatar">
-//                                 {leaders[0]?.name?.charAt(0)?.toUpperCase() ||
-//                                     "?"}
-//                             </div>
-//                             <div className="podium-name">
-//                                 {leaders[0]?.name || "Unknown"}
-//                             </div>
-//                             <div className="podium-stats">
-//                                 <span className="podium-score">
-//                                     {leaders[0]?.score || 0} pts
-//                                 </span>
-//                                 <span className="podium-problems">
-//                                     {leaders[0]?.problemSolved || 0} solved
-//                                 </span>
-//                             </div>
-//                         </div>
-
-//                         <div className="podium-card third-place">
-//                             <div className="podium-rank">3rd</div>
-//                             <div className="podium-avatar">
-//                                 {leaders[2]?.name?.charAt(0)?.toUpperCase() ||
-//                                     "?"}
-//                             </div>
-//                             <div className="podium-name">
-//                                 {leaders[2]?.name || "Unknown"}
-//                             </div>
-//                             <div className="podium-stats">
-//                                 <span className="podium-score">
-//                                     {leaders[2]?.score || 0} pts
-//                                 </span>
-//                                 <span className="podium-problems">
-//                                     {leaders[2]?.problemSolved || 0} solved
-//                                 </span>
-//                             </div>
-//                         </div>
-//                     </div>
-//                 )}
-
-//                 {/* Leaderboard Table */}
-//                 <div className="table-wrapper">
-//                     <table className="leaderboard-table">
-//                         <thead>
-//                             <tr>
-//                                 <th>Rank</th>
-//                                 <th>User</th>
-//                                 <th>Solved</th>
-//                                 <th>Score</th>
-//                             </tr>
-//                         </thead>
-//                         <tbody>
-//                             {leaders.map((user, index) => (
-//                                 <tr
-//                                     key={user.id || index}
-//                                     className={index < 3 ? "top-three" : ""}
-//                                 >
-//                                     <td className="rank-col">
-//                                         <span className="rank-badge">
-//                                             {getRankDisplay(index)}
-//                                         </span>
-//                                     </td>
-//                                     <td className="user-col">
-//                                         <div className="user-info">
-//                                             <div className="user-avatar">
-//                                                 {user.name
-//                                                     ?.charAt(0)
-//                                                     ?.toUpperCase() || "?"}
-//                                             </div>
-//                                             <span className="user-name">
-//                                                 {user.name || "Unknown"}
-//                                             </span>
-//                                         </div>
-//                                     </td>
-//                                     <td className="solved-col">
-//                                         <span className="number">
-//                                             {user.problemSolved || 0}
-//                                         </span>
-//                                     </td>
-//                                     <td className="score-col">
-//                                         <span className="score-number">
-//                                             {user.score || 0}
-//                                         </span>
-//                                     </td>
-//                                 </tr>
-//                             ))}
-//                         </tbody>
-//                     </table>
-//                 </div>
-
-//                 {leaders.length === 0 && (
-//                     <div className="empty-state">
-//                         <div className="empty-icon">🏆</div>
-//                         <h3>No rankings yet</h3>
-//                         <p>
-//                             Start solving problems to appear on the leaderboard!
-//                         </p>
-//                     </div>
-//                 )}
-//             </div>
-//         </div>
-//     );
-// }

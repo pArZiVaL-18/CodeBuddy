@@ -20,11 +20,12 @@ export default function LoginPage() {
         setLoading(true);
         setErr("");
         setMsg("");
+
         try {
             const res = await fetch(`${BASE_URL}/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                credentials: "include", // allow cookie if server sets jwt cookie
+                credentials: "include",
                 body: JSON.stringify({
                     email: form.email,
                     password: form.password,
@@ -34,7 +35,6 @@ export default function LoginPage() {
             const data = await res.json();
             if (!res.ok) throw new Error(data.message || "Login failed");
 
-            // Store JWT from body for SPA API calls
             if (data.token) {
                 localStorage.setItem("jwt", data.token);
                 console.log("Login successful, token stored.");
@@ -43,6 +43,7 @@ export default function LoginPage() {
                     "Navigating to dashboard...",
                     localStorage.getItem("jwt")
                 );
+                localStorage.setItem("userEmail", form.email);
                 navigate("/dashboard");
             }
         } catch (e) {
@@ -54,44 +55,61 @@ export default function LoginPage() {
 
     return (
         <div className="auth-container">
+            {/* Back to Home Button */}
+            <button
+                className="back-to-home"
+                onClick={() => navigate("/")}
+                aria-label="Back to home"
+            >
+                <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                >
+                    <path d="M19 12H5M12 19l-7-7 7-7" />
+                </svg>
+                <span>Back to Home</span>
+            </button>
+
             <div className="auth-box">
                 <div className="auth-header">
                     <h2>Welcome Back</h2>
-                    <p>Sign in to your account</p>
+                    <p>Sign in to continue your coding journey</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="auth-form">
+                <form className="auth-form" onSubmit={handleSubmit}>
+                    {err && <div className="auth-error">{err}</div>}
+                    {msg && <div className="auth-success">{msg}</div>}
+
                     <div className="input-group">
                         <input
                             type="email"
                             name="email"
+                            placeholder="Enter your email"
                             value={form.email}
                             onChange={handleChange}
                             required
-                            placeholder=" "
                         />
-                        <label>Email Address</label>
                     </div>
 
                     <div className="input-group">
                         <input
                             type="password"
                             name="password"
+                            placeholder="Enter your password"
                             value={form.password}
                             onChange={handleChange}
                             required
-                            placeholder=" "
                         />
-                        <label>Password</label>
                     </div>
-
-                    {err && <p className="auth-error">{err}</p>}
-                    {msg && <p className="auth-success">{msg}</p>}
 
                     <button
                         type="submit"
-                        disabled={loading}
                         className="auth-button"
+                        disabled={loading}
                     >
                         {loading ? (
                             <div className="loading-spinner"></div>
@@ -103,7 +121,7 @@ export default function LoginPage() {
 
                 <div className="auth-footer">
                     <p>
-                        Don’t have an account?{" "}
+                        Don't have an account?{" "}
                         <a onClick={() => navigate("/signup")}>Create one</a>
                     </p>
                 </div>

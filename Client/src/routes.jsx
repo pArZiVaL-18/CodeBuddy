@@ -1,7 +1,7 @@
 // routes.jsx
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 // import LoginPage from "./pages/LoginPage";
-import Dashboard from "./pages/dashboard";
+import Dashboard from "./pages/Dashboard.jsx";
 import SolveSolo from "./pages/SolveSolo";
 import RoomPage from "./pages/RoomPage";
 import LoginPage from "./pages/Login";

@@ -134,13 +134,16 @@ export default function ProblemCard({ problem, currentUser, solvedIds }) {
             </div>
 
             <div className="problem-card-actions">
-                <button className="action-btn solo-btn" onClick={handleSolo}>
+                <button
+                    className="action-btn-two solo-btn"
+                    onClick={handleSolo}
+                >
                     <span className="btn-icon">👤</span>
                     Solve Solo
                 </button>
 
                 <button
-                    className="action-btn friend-btn"
+                    className="action-btn-two friend-btn"
                     onClick={handleWithFriend}
                 >
                     <span className="btn-icon">👥</span>
