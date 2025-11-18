@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { Code2 } from "lucide-react";
 import ProblemCard from "../components/ProblemCard.jsx";
 import toast from "react-hot-toast";
 import "../styles/Dashboard.css";
@@ -163,7 +164,11 @@ export default function Dashboard() {
         <div className="dashboard-container">
             {/* Navigation Bar */}
             <nav className="dashboard-nav">
-                <div className="nav-logo">CodeBuddy</div>
+                {/* <div className="nav-logo">CodeBuddy</div> */}
+                <div className="logo">
+                    <Code2 size={24} className="logo-icon" />
+                    <span className="logo-text">CodeBuddy</span>
+                </div>
                 <div className="nav-links">
                     <button
                         onClick={() => navigate("/")}

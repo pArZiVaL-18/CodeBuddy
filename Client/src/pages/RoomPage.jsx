@@ -1417,7 +1417,7 @@ export default function ProblemPageWithChat() {
                 <div className="header-left">
                     <div className="logo">
                         <Code2 size={24} className="logo-icon" />
-                        <span className="logo-text">CodeSolve</span>
+                        <span className="logo-text">CodyBuddy</span>
                     </div>
                 </div>
 
@@ -1495,14 +1495,14 @@ export default function ProblemPageWithChat() {
                             </select>
 
                             <div className="editor-actions">
-                                <button
+                                {/* <button
                                     onClick={handleReset}
                                     className="btn-reset"
                                     disabled={isRunning}
                                 >
                                     <RotateCcw size={16} />
                                     Reset
-                                </button>
+                                </button> */}
                                 <button
                                     onClick={handleRun}
                                     className="btn-run"

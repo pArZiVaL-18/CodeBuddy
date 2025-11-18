@@ -377,7 +377,10 @@ function twoSum(nums, target) {
                         <div className="footer-section">
                             <h3>Connect with Us</h3>
                             <div className="social-links">
-                                <a href="#" aria-label="GitHub">
+                                <a
+                                    href="http://www.linkedin.com/in/sujaldawande25"
+                                    aria-label="GitHub"
+                                >
                                     SD
                                 </a>
                                 <a href="#" aria-label="Twitter">

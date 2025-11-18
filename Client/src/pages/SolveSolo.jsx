@@ -366,7 +366,16 @@ import { useState, useEffect, useRef } from "react";
 import { runCode, submitCode } from "../api/judge0";
 import { useLocation } from "react-router-dom";
 import ProblemPanel from "../components/ProblemPanel";
-import { Play, Send, RotateCcw, Sun, Moon, Code2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {
+    Play,
+    Send,
+    RotateCcw,
+    Sun,
+    Moon,
+    Code2,
+    ArrowLeftCircle,
+} from "lucide-react";
 import { jwtDecode } from "jwt-decode";
 import "../styles/SolveSolo.css";
 import server from "../enviornment";
@@ -401,6 +410,7 @@ export default function ProblemPage() {
     const [languageId, setLanguageId] = useState(71);
     const [language, setLanguage] = useState("python");
     const [editorHeight, setEditorHeight] = useState(60);
+    const navigate = useNavigate();
 
     const dividerRef = useRef(null);
     const containerRef = useRef(null);
@@ -601,8 +611,13 @@ export default function ProblemPage() {
             <header className="problem-header">
                 <div className="header-left">
                     <div className="logo">
-                        <Code2 size={24} className="logo-icon" />
-                        <span className="logo-text">CodeSolve</span>
+                        <ArrowLeftCircle
+                            size={24}
+                            className="logo-icon"
+                            onClick={() => navigate("/dashboard")}
+                        />
+                        {/* <Code2 size={24} className="logo-icon" /> */}
+                        <span className="logo-text">CodeBuddy</span>
                     </div>
                 </div>
                 <div className="header-right">
@@ -647,14 +662,14 @@ export default function ProblemPage() {
                             </select>
 
                             <div className="editor-actions">
-                                <button
+                                {/* <button
                                     onClick={handleReset}
                                     className="btn-reset"
                                     disabled={isRunning}
                                 >
                                     <RotateCcw size={16} />
                                     Reset
-                                </button>
+                                </button> */}
                                 <button
                                     onClick={handleRun}
                                     className="btn-run"
