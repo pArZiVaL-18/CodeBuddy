@@ -105,8 +105,8 @@ export async function submitCode(
             .map((line) => line.trim())
             .filter((line) => line !== "");
 
-        console.log("stdoutLines:", stdoutLines);
-        console.log("expectedOutputs:", expectedOutputs);
+        // console.log("stdoutLines:", stdoutLines);
+        // console.log("expectedOutputs:", expectedOutputs);
 
         for (let i = 0; i < expectedOutputs.length; i++) {
             const actualRaw = stdoutLines[i] ?? "";

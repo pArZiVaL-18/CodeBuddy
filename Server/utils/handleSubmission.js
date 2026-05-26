@@ -35,8 +35,8 @@ export async function handleSubmission(data) {
         testCasesPassed,
     } = data;
 
-    console.log("Handling submission for users:", userIds);
-    console.log("Handling submission for problem:", problemId);
+    // console.log("Handling submission for users:", userIds);
+    // console.log("Handling submission for problem:", problemId);
 
     const problem = await Problem.findById(problemId);
     if (!problem) throw new Error("Problem not found");

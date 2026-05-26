@@ -6,21 +6,6 @@ export default function setupSocket(io) {
         socket.on("join-room", ({ roomId, userId, username }) => {
             socket.join(roomId);
 
-            // console.log(`🧑‍💻 Joined room: ${roomId}`);
-            // console.log(`User ID: ${userId}, Username: ${username}`);
-
-            // console.log(
-            //     "JOIN:",
-            //     username,
-            //     "Room:",
-            //     roomId,
-            //     "Socket:",
-            //     socket.id
-            // );
-
-            // if (!roomUsers[roomId]) roomUsers[roomId] = [];
-            // roomUsers[roomId].push({ id: socket.id, userId, username });
-
             if (!roomUsers[roomId]) roomUsers[roomId] = [];
 
             const alreadyInRoom = roomUsers[roomId].some(
@@ -65,7 +50,7 @@ export default function setupSocket(io) {
 
         socket.on("leave-room", (roomId, username) => {
             socket.leave(roomId);
-            console.log(`${username} left room ${roomId}`);
+            // console.log(`${username} left room ${roomId}`);
 
             // Optionally, notify others in the room
             socket.to(roomId).emit("user-left", { username });
